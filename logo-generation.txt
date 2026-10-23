@@ -1,0 +1,12 @@
+Generated using the built-in ImageGen tool, with transparent_background=true.
+Reference: user-provided За Гранью brand image.
+Output: dist/assets/za-granyu-logo-transparent.png
+
+Final prompt:
+Use case: logo-brand / background-extraction.
+Edit target: attached reference logo for the Russian VR arena «ЗА ГРАНЬЮ».
+Primary request: Produce a premium horizontal website logo on a truly transparent RGBA background, based on this exact brand identity.
+Composition: wide 3:1 horizontal lockup, tightly composed with modest transparent padding. Left: the circular broken-ring emblem with angular lightning / stylized Z, red on left and electric blue on right. Right: large legible italic angular Cyrillic wordmark, "ЗА" in vivid red and "ГРАНЬЮ" in bright white metallic lettering. Under the wordmark the small spaced subtitle "VR • АРЕНА" in white.
+Text verbatim: "ЗА ГРАНЬЮ"; "VR • АРЕНА". Preserve the Ь and Ю letters precisely. No other text, omit the bottom slogan.
+Style: esports, sharp geometry, restrained metallic detail and subtle red/blue edge lighting. Simplify the reference micro-textures and flying fragments for excellent legibility at a website header size.
+Constraints: actual alpha transparency throughout all empty areas including ring interior and letter counters. NO black background, NO black rectangle, NO opaque plaque, NO checkerboard baked into image, NO backdrop, NO mockup, NO scene, NO huge surrounding glow. Single logo only, fully visible with no cropped points. Background must be transparent.

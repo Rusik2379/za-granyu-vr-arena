@@ -103,5 +103,13 @@ export function createPromoService({databasePath, secret, prizes, validityDays, 
       }
     } finally {dispatching = false;}
   }
-  return {claim, dispatch, close: () => db.close()};
+  function forBooking({id, clientToken, phone}) {
+    const row = db.prepare('SELECT * FROM promo_leads WHERE id=?').get(String(id || ''));
+    if (!row || row.client_hash !== hash('client:' + clientToken) || row.phone !== normalizePhone(phone)) {
+      throw new PromoError(403, 'PROMO_OWNER', 'Скидка доступна только с номером, указанным при вращении колеса');
+    }
+    if (row.expires_at <= now()) throw new PromoError(410, 'PROMO_EXPIRED', 'Срок действия скидки закончился');
+    return publicResult(row);
+  }
+  return {claim, dispatch, forBooking, close: () => db.close()};
 }

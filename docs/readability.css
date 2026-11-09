@@ -44,3 +44,12 @@ body{font-size:16px;line-height:1.75}
 .modal-intro,.promo-details .modal-intro{font-size:14px}.promo-details .field,.modal .field{font-size:13px}.promo-details input:not([type=checkbox]),.modal .field input,.modal .field select{font-size:15px}.promo-details .consent{font-size:12px}.promo-details .promo-rules{font-size:11px}.promo-details .btn{font-size:14px}.promo-benefits>span{font-size:11px}.promo-details .promo-result p{font-size:13px}.promo-details .promo-result .reference{font-size:11px}.modal .demo-note,.modal .consent{font-size:12px}.story-content p{font-size:15px}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.motion-reveal{opacity:1;translate:none;transition:none!important}*,*:before,*:after{animation:none!important;transition:none!important}}
+/* The custom BookNow form shares the site's field and button styles. */
+.booknow-form [hidden] { display: none !important; }
+.booking-discount { padding: 22px; margin-bottom: 28px; border: 1px solid var(--blue); background: #1689ff12; }
+.booking-discount strong { display: block; color: var(--blue); font-size: 24px; }
+.booking-discount span { display: block; margin: 8px 0; font-size: 12px; overflow-wrap: anywhere; }
+.booking-discount p { margin: 0; font-size: 14px; line-height: 1.6; }
+.booknow-form [data-error] { overflow-wrap: anywhere; }
+.booknow-form [data-service-note] { grid-column: 1 / -1; margin: 0; line-height: 1.7; }
+.booknow-form .success h3 { font-size: 28px; line-height: 1.3; }

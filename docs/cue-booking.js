@@ -33,7 +33,7 @@
       observer.observe(root);
       visibilityObserver = new IntersectionObserver(entries => {
         document.body.classList.toggle('cue-booking-active', entries.some(entry => entry.isIntersecting));
-      }, {rootMargin: '-40% 0px -40% 0px'});
+      }, {rootMargin: '-100px 0px -100px 0px'});
       visibilityObserver.observe(root.closest('.booking-section'));
     });
     return `<div class="cue-booking-shell">

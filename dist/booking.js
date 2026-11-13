@@ -32,7 +32,6 @@
     const id = 'booknow-' + crypto.randomUUID();
     queueMicrotask(() => mount(document.getElementById(id), opts));
     const offer = opts.promo;
-    const scenarios = typeof games === 'undefined' ? [] : games;
     return `<form id="${id}" class="booking-form booknow-form">
       ${offer ? `<div class="booking-discount"><div class="booking-discount-heading"><span class="booking-discount-icon">${icon('gift')}</span><div><strong>Твоя скидка −${escapeHtml(offer.discountPercent)}%</strong><span>На выбранную бронь · до ${escapeHtml(new Date(offer.expiresAt).toLocaleDateString('ru-RU', {timeZone: 'Asia/Barnaul'}))}</span></div></div><p>Имя и телефон уже заполнены. Выбери услугу и время — бонус закрепится за записью. Администратор применит скидку к сумме заказа в BookNow.</p></div>` : ''}
       <fieldset class="booking-fields"><legend class="form-section-title">01 / Услуга и свободное время</legend>
@@ -45,7 +44,6 @@
           <div class="booking-calendar full" hidden><p class="booking-calendar-title">Ближайшие даты <span>Время Барнаула · UTC+7</span></p><div class="booking-days" data-days aria-label="Доступные даты"></div><p class="muted small" data-calendar-note aria-live="polite"></p></div>
           <label class="field" data-quantity hidden><span>Количество мест</span><select name="quantity">${option('1', '1')}</select></label>
           <label class="field"><span>Гостей в компании</span><select name="guests">${Array.from({length: 10}, (_, index) => option(String(index + 1), String(index + 1))).join('')}</select></label>
-          <label class="field full"><span>Пожелание по сценарию</span><select name="scenario">${option('', 'Помогите выбрать игру')}${scenarios.map(game => `<option value="${escapeHtml(game.title)}"${opts.game === game.id ? ' selected' : ''}>${escapeHtml(game.title)}</option>`).join('')}</select></label>
           <p class="muted small full" data-service-note></p>
         </div>
       </fieldset>
@@ -198,7 +196,7 @@
       field('time').innerHTML = option('', 'Выберите услугу');
       element.querySelector('[data-staffer]').hidden = !service || service.autoAllocate;
       element.querySelector('[data-service-note]').textContent = service
-        ? `${service.duration ? service.duration + ' минут. ' : ''}${service.collective ? 'Количество мест определяет число бронируемых мест.' : 'Оформляется один сеанс выбранной услуги.'} Число гостей и пожелание по игре передадим администратору.` : '';
+        ? `${service.duration ? service.duration + ' минут. ' : ''}${service.collective ? 'Количество мест определяет число бронируемых мест.' : 'Оформляется один сеанс выбранной услуги.'} Число гостей передадим администратору.` : '';
       summary();
       if (!service) return;
       try {

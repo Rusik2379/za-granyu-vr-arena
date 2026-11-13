@@ -56,3 +56,23 @@
   });
   animateHero();
 })();
+
+// Keep the promo launcher away from the site's own booking form on every screen.
+(() => {
+  if (!('IntersectionObserver' in window)) return;
+  let section;
+  const observer = new IntersectionObserver(entries => {
+    document.body.classList.toggle('booking-section-active', entries.some(entry => entry.isIntersecting));
+  }, {rootMargin: '-100px 0px -100px 0px'});
+  function watchBookingSection() {
+    const next = document.getElementById('booking');
+    if (next === section) return;
+    observer.disconnect();
+    document.body.classList.remove('booking-section-active');
+    section = next;
+    if (section) observer.observe(section);
+  }
+  watchBookingSection();
+  const app = document.getElementById('app');
+  if (app) new MutationObserver(watchBookingSection).observe(app, {childList: true});
+})();

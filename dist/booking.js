@@ -34,7 +34,7 @@
     const offer = opts.promo;
     const scenarios = typeof games === 'undefined' ? [] : games;
     return `<form id="${id}" class="booking-form booknow-form">
-      ${offer ? `<div class="booking-discount"><strong>Твоя скидка −${escapeHtml(offer.discountPercent)}%</strong><span>До ${escapeHtml(new Date(offer.expiresAt).toLocaleDateString('ru-RU'))} · ${escapeHtml(offer.id)}</span><p>Бонус проверяется по номеру телефона. Администратор применит скидку к стоимости в BookNow.</p></div>` : ''}
+      ${offer ? `<div class="booking-discount"><div class="booking-discount-heading"><span class="booking-discount-icon">${icon('gift')}</span><div><strong>Твоя скидка −${escapeHtml(offer.discountPercent)}%</strong><span>На выбранную бронь · до ${escapeHtml(new Date(offer.expiresAt).toLocaleDateString('ru-RU', {timeZone: 'Asia/Barnaul'}))}</span></div></div><p>Имя и телефон уже заполнены. Выбери услугу и время — бонус закрепится за записью. Администратор применит скидку к сумме заказа в BookNow.</p></div>` : ''}
       <fieldset class="booking-fields"><legend class="form-section-title">01 / Услуга и свободное время</legend>
         <div class="form-grid">
           <label class="field" data-location><span>Локация</span><select name="locationId" required disabled>${option('', 'Загружаем BookNow…')}</select></label>
@@ -59,7 +59,8 @@
       </fieldset>
       <label class="promo-honeypot" aria-hidden="true">Ваш сайт<input name="website" tabindex="-1" autocomplete="off"></label>
       <div class="booking-form-bottom">
-        <div class="booking-total"><span>${offer ? 'Предварительно со скидкой' : 'Стоимость выбранного сеанса'}</span><strong data-total>Выберите сеанс</strong></div>
+        <div class="booking-total"><span>${offer ? 'Предварительно со скидкой' : 'Стоимость выбранного сеанса'}</span><div class="booking-total-amount"><del data-before hidden></del><strong data-total>Выберите сеанс</strong></div></div>
+        <p class="booking-savings" data-savings hidden aria-live="polite"></p>
         <p class="muted small" data-availability aria-live="polite">Проверяем доступные услуги…</p>
         <label class="consent"><input type="checkbox" name="callback"><span>Перезвоните мне для уточнения деталей</span></label>
         <label class="consent"><input type="checkbox" name="consent" required><span>Согласен на обработку и передачу имени, телефона, email и пожеланий в BookNow для оформления записи${offer ? ' и использования скидки' : ''}.</span></label>
@@ -124,14 +125,25 @@
     function summary() {
       const slot = slots.find(item => item.start === field('time').value);
       const total = element.querySelector('[data-total]');
+      const before = element.querySelector('[data-before]');
+      const savings = element.querySelector('[data-savings]');
+      before.hidden = true;
+      savings.hidden = true;
       const quantity = Number(field('quantity').value || 1);
       if (!slot) {total.textContent = 'Выберите сеанс'; submit.disabled = true; return;}
-      const amount = Number(String(slot.priceLabel || '').replace(/[^\d,.-]/g, '').replace(',', '.'));
       const discount = opts.promo?.discountPercent || 0;
-      total.textContent = slot.priceLabel && Number.isFinite(amount)
-        ? new Intl.NumberFormat('ru-RU', {style: 'currency', currency: 'RUB', maximumFractionDigits: 2})
-          .format(Math.round(amount * quantity * (100 - discount)) / 100)
-        : 'Уточняется у администратора';
+      if (slot.priceLabel && Number.isSafeInteger(slot.priceMinor)) {
+        const format = amount => new Intl.NumberFormat('ru-RU', {style: 'currency', currency: 'RUB'}).format(amount / 100);
+        const base = slot.priceMinor * quantity;
+        const reduction = Math.round(base * discount / 100);
+        total.textContent = format(base - reduction);
+        if (discount) {
+          before.textContent = format(base);
+          before.hidden = false;
+          savings.textContent = `Экономия ${format(reduction)} · скидка ${discount}% из колеса`;
+          savings.hidden = false;
+        }
+      } else total.textContent = 'Уточняется у администратора';
       submit.disabled = busy || locked;
     }
 
@@ -150,6 +162,8 @@
       field('time').disabled = true;
       field('time').innerHTML = option('', 'Проверяем свободное время…');
       element.querySelector('[data-total]').textContent = 'Выберите сеанс';
+      element.querySelector('[data-before]').hidden = true;
+      element.querySelector('[data-savings]').hidden = true;
       if (!service || !field('date').value || (!service.autoAllocate && !field('stafferId').value)) return;
       availability.textContent = 'Проверяем расписание BookNow…';
       try {
@@ -246,7 +260,9 @@
           <h3>Запись оформлена в BookNow</h3><p>${escapeHtml(result.service)}</p>
           <p>${escapeHtml(new Date(result.start).toLocaleString('ru-RU', {timeZone: result.timezone, dateStyle: 'long', timeStyle: 'short'}))}</p>
           <p>${escapeHtml(result.status)}</p><span class="reference">${escapeHtml(result.id)}</span>
-          ${result.discountPercent ? `<p>Скидка ${result.discountPercent}% передана администратору в примечании к записи. Администратор применит её к стоимости в CRM.</p>` : ''}</div>`;
+          ${result.discountPercent ? `<div class="booking-success-discount"><strong>Скидка ${escapeHtml(result.discountPercent)}% закреплена за бронью</strong>
+            ${result.quote ? `<p>Предварительно к оплате <b>${escapeHtml(result.quote.totalLabel)}</b> вместо ${escapeHtml(result.quote.baseLabel)}</p>` : ''}
+            <p>Бонус и расчёт переданы администратору. Он применит скидку к сумме заказа в BookNow.</p></div>` : ''}</div>`;
         locked = true;
       } catch (failure) {
         if (!element.isConnected) return;
@@ -279,7 +295,7 @@
 
   function open(opts = {}) {
     modal(`<div class="eyebrow">Онлайн-запись</div><h2 id="modal-title">${opts.promo ? 'ЗАПИСАТЬСЯ СО СКИДКОЙ' : 'ТВОЯ СЛЕДУЮЩАЯ ИГРА'}</h2>
-      <p class="modal-intro">Выбери услугу и свободный сеанс.${opts.duration ? ' Выбранный на сайте формат — ' + escapeHtml(opts.duration) + ' мин. Найди соответствующую услугу ниже.' : ''}</p>${form(opts)}`);
+      <p class="modal-intro">Выбери услугу и свободный сеанс.${opts.duration ? ' Выбранный на сайте формат — ' + escapeHtml(opts.duration) + ' мин. Найди соответствующую услугу ниже.' : ''}</p>${form(opts)}`, 'booking-modal');
   }
   function privacy() {
     modal(`<div class="eyebrow">Онлайн-запись</div><h2 id="modal-title">ОБРАБОТКА ДАННЫХ ЗАПИСИ</h2><div class="article-modal">

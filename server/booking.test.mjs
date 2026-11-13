@@ -8,6 +8,7 @@ import {createPromoService} from './promo-core.mjs';
 import {createBookingService, slotToUtc} from './booking-service.mjs';
 import {BookNowError} from './booknow-client.mjs';
 import {createSiteServer} from './site-server.mjs';
+import {bookingQuote} from './booking-price.mjs';
 
 const locationId = '11111111-1111-4111-8111-111111111111';
 const serviceId = '22222222-2222-4222-8222-222222222222';
@@ -30,7 +31,7 @@ function setup(t) {
     },
     async request(path, body) {
       if (path.includes('/time-slots?')) return {timezone: 'Asia/Barnaul', currency: 'RUB',
-        dates: [{date: '2026-11-11', slots: ['12:00', '14:00'].map(start => ({start, end: '15:00', quantity: '1', price_formatted: '1 200,00 ₽'}))},
+        dates: [{date: '2026-11-11', slots: ['12:00', '14:00'].map(start => ({start, end: '15:00', quantity: '1', price: 120000, price_formatted: '1 200,00 ₽'}))},
           {date: '2026-11-12', slots: [{start: '12:00', end: '13:00', quantity: 0}]}]};
       assert.equal(path, '/bookings');
       calls.push(body);
@@ -59,9 +60,13 @@ test('bonus percentage comes from SQLite and is passed to the CRM note', async t
   const f = setup(t), offer = f.claim();
   const result = await f.bookings.book({...f.input(), promoId: offer.id, discountPercent: 99});
   assert.equal(result.discountPercent, 7);
+  assert.equal(result.promoId, offer.id);
+  assert.deepEqual([result.quote.baseMinor, result.quote.discountMinor, result.quote.totalMinor], [120000, 8400, 111600]);
+  assert.equal(result.discountApplication, 'administrator');
   assert.match(f.calls[0].booking_comment, /Колесо скидок: 7%/);
   assert.ok(f.calls[0].booking_comment.includes(offer.id));
   assert.match(f.calls[0].booking_comment, /Применить скидку вручную/);
+  assert.ok(f.calls[0].booking_comment.includes(result.quote.totalLabel));
   await assert.rejects(f.bookings.book({...f.input(), time: '14:00', promoId: offer.id}), error => error.code === 'PROMO_USED');
   assert.equal(f.calls.length, 1);
 });
@@ -148,6 +153,8 @@ test('a hidden service price also stays hidden in slot responses', async t => {
   f.client.list = async path => (await original(path)).map(row => path.includes('/services') ? {...row, is_price_hidden: true} : row);
   assert.equal((await f.bookings.catalog()).locations[0].services[0].priceLabel, '');
   assert.equal((await f.bookings.slots(f.input())).slots[0].priceLabel, '');
+  assert.equal((await f.bookings.slots(f.input())).slots[0].priceMinor, null);
+  assert.equal((await f.bookings.book(f.input())).quote, null);
 });
 
 test('enabling bookings does not enable the discount wheel', async t => {
@@ -162,4 +169,45 @@ test('enabling bookings does not enable the discount wheel', async t => {
   const response = await fetch(base + '/api/promo/claim', {method: 'POST', headers: {Origin: 'https://arena.example',
     'Content-Type': 'application/json'}, body: '{}'});
   assert.equal(response.status, 503);
+});
+
+test('discount calculations use minor units and handle free or hidden services', () => {
+  assert.deepEqual([bookingQuote(10001, 2, 7).baseMinor, bookingQuote(10001, 2, 7).discountMinor,
+    bookingQuote(10001, 2, 7).totalMinor], [20002, 1400, 18602]);
+  assert.equal(bookingQuote(90000, 1, 10).totalMinor, 81000);
+  assert.equal(bookingQuote(0, 1, 5).totalMinor, 0);
+  assert.equal(bookingQuote(null, 1, 10), null);
+});
+
+test('live wheel API issues one offer and attaches the verified quote to one booking', async t => {
+  const f = setup(t);
+  const client = {...f.client, async request(path, body) {
+    if (path.includes('/time-slots?')) return {timezone: 'Asia/Barnaul', currency: 'RUB', dates: [{
+      date: new URL(path, 'https://example.test').searchParams.get('range_start'),
+      slots: [{start: '12:00', end: '13:00', quantity: 1, price: 120000, price_formatted: '1 200,00 ₽'}]}]};
+    return f.client.request(path, body);
+  }};
+  const origin = 'https://arena.example';
+  const server = createSiteServer({client, databasePath: ':memory:', secret: 'live-wheel-test-secret-'.repeat(3), origins: [origin], promoEnabled: true});
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const base = 'http://127.0.0.1:' + server.address().port;
+  const post = async (path, data) => {
+    const response = await fetch(base + path, {method: 'POST', headers: {Origin: origin, 'Content-Type': 'application/json'}, body: JSON.stringify(data)});
+    return {status: response.status, data: await response.json()};
+  };
+  assert.match(await (await fetch(base + '/promo-config.js')).text(), /"mode":"live"/);
+  const input = {...f.input(), date: new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10)};
+  const offer = await post('/api/promo/claim', input);
+  assert.equal(offer.status, 200);
+  assert.ok([5, 7, 10].includes(offer.data.discountPercent));
+  assert.equal((await post('/api/promo/claim', input)).data.id, offer.data.id);
+  const response = await post('/api/booking/create', {...input, promoId: offer.data.id, discountPercent: 99, totalMinor: 1});
+  assert.equal(response.status, 200);
+  assert.equal(response.data.discountPercent, offer.data.discountPercent);
+  assert.equal(response.data.quote.totalMinor, 120000 - Math.round(120000 * offer.data.discountPercent / 100));
+  assert.ok(f.calls[0].booking_comment.includes(offer.data.id));
+  assert.ok(f.calls[0].booking_comment.includes(response.data.quote.totalLabel));
+  assert.equal((await post('/api/booking/create', {...input, promoId: offer.data.id})).data.id, response.data.id);
+  assert.equal(f.calls.length, 1);
 });

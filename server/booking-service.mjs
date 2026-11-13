@@ -2,6 +2,7 @@ import {DatabaseSync} from 'node:sqlite';
 import {createHmac} from 'node:crypto';
 import {normalizePhone, PromoError} from './promo-core.mjs';
 import {BookNowError} from './booknow-client.mjs';
+import {bookingQuote} from './booking-price.mjs';
 
 const fail = (status, code, message) => { throw new PromoError(status, code, message); };
 const uuid = value => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value || '');
@@ -96,6 +97,7 @@ export function createBookingService({client, promo, databasePath, secret, now =
         slots: (day.slots || []).filter(slot => Number(slot.quantity) > 0 &&
           /^\d{2}:\d{2}$/.test(slot.start) && Date.parse(slotToUtc(day.date, slot.start, result.timezone)) > now())
           .map(slot => ({start: slot.start, end: slot.end, quantity: Number(slot.quantity),
+            priceMinor: service.priceHidden ? null : slot.price,
             priceLabel: service.priceHidden ? '' : slot.price_formatted}))}))};
   }
 
@@ -149,6 +151,7 @@ export function createBookingService({client, promo, databasePath, secret, now =
     if (input.promoId && !promo) fail(400, 'PROMO_DISABLED', 'Бонусы сейчас недоступны. Оформите запись без скидки');
     const offer = input.promoId ? promo.forBooking({id: input.promoId, phone, clientToken: input.clientToken}) : null;
     if (offer && Date.parse(reservedOn) > Date.parse(offer.expiresAt)) fail(400, 'PROMO_VISIT_DATE', 'Для скидки выберите посещение до окончания срока бонуса');
+    const quote = bookingQuote(slot.priceMinor, quantity, offer?.discountPercent || 0, available.currency);
     const fingerprint = hash([phone, input.locationId, input.serviceId, reservedOn].join('|'));
     // Reserve both the request and the bonus before the network call. Uncertain outcomes stay reserved.
     try {
@@ -162,7 +165,7 @@ export function createBookingService({client, promo, databasePath, secret, now =
       return previous(row, ownerHash);
     }
     const note = [`Гостей в компании: ${guests}.`, scenario ? 'Пожелание по игре: ' + scenario : '', message,
-      offer ? `Колесо скидок: ${offer.discountPercent}%. Бонус ${offer.id}. Действует до ${offer.expiresAt}. Применить скидку вручную и проверить номер при посещении.` : '',
+      offer ? `Колесо скидок: ${offer.discountPercent}%. ${quote ? `Стоимость ${quote.baseLabel}, скидка ${quote.discountLabel}, к оплате ${quote.totalLabel}. ` : ''}Бонус ${offer.id}. Действует до ${offer.expiresAt}. Применить скидку вручную и проверить номер при посещении.` : '',
       `Запись с сайта. Запрос ${input.requestId}.`].filter(Boolean).join('\n');
     let result;
     try {
@@ -175,7 +178,8 @@ export function createBookingService({client, promo, databasePath, secret, now =
       if (!booking.uuid) throw new Error('Missing booking UUID');
       result = {id: booking.uuid, requestId: input.requestId, start: booking.start_time || reservedOn,
         timezone: available.timezone, status: booking.status?.name || '', service: service.name,
-        discountPercent: offer?.discountPercent || 0, priceLabel: booking.order?.total_formatted || slot.priceLabel};
+        discountPercent: offer?.discountPercent || 0, promoId: offer?.id || null, quote,
+        discountApplication: offer ? 'administrator' : null, priceLabel: booking.order?.total_formatted || slot.priceLabel};
     } catch (error) {
       const rejected = error instanceof BookNowError && [400, 403, 404, 422, 429].includes(error.status);
       db.prepare('UPDATE site_bookings SET state=? WHERE request_id=?').run(rejected ? 'rejected' : 'uncertain', input.requestId);

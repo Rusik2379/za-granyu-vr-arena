@@ -76,7 +76,7 @@ export function createSiteServer({client, databasePath, secret, origins = [], si
       limits.set(identity, counter);
       for (const [key, value] of limits) if (value.until < time) limits.delete(key);
       if (++counter.count > 60) return json(429, {message: 'Слишком много запросов. Повторите через минуту'});
-      if (url.pathname === '/api/health') return json(200, {bookingEnabled: !!bookings});
+      if (url.pathname === '/api/health') return json(200, {bookingEnabled: !!bookings, promoEnabled: !!promo});
       if (!bookings) return json(503, {message: 'Онлайн-запись ещё не подключена'});
       if (req.method === 'GET') {
         const input = Object.fromEntries(url.searchParams);

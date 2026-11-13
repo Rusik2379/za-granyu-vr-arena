@@ -25,12 +25,13 @@ function setup(t) {
     async list(path) {
       if (path === '/locations') return [{uuid: locationId, name: 'Тестовая арена', timezone: {name: 'Asia/Barnaul'}}];
       if (path.includes('/services')) return [{uuid: serviceId, name: 'Тестовый сеанс', live: true, live_in_widget: true,
-        is_auto_allocated: true, is_collective: false, kind: 'service', duration: 60, price_formatted: '1 200,00 ₽'}];
+        is_auto_allocated: true, is_collective: false, kind: 'individual', duration: {value: 60, label: 'minutes'}, price_formatted: '1 200,00 ₽'}];
       return [];
     },
     async request(path, body) {
       if (path.includes('/time-slots?')) return {timezone: 'Asia/Barnaul', currency: 'RUB',
-        dates: [{date: '2026-11-11', slots: ['12:00', '14:00'].map(start => ({start, end: '15:00', quantity: '1', price_formatted: '1 200,00 ₽'}))}]};
+        dates: [{date: '2026-11-11', slots: ['12:00', '14:00'].map(start => ({start, end: '15:00', quantity: '1', price_formatted: '1 200,00 ₽'}))},
+          {date: '2026-11-12', slots: [{start: '12:00', end: '13:00', quantity: 0}]}]};
       assert.equal(path, '/bookings');
       calls.push(body);
       return {uuid: randomUUID(), start_time_local: '2026-11-11 12:00:00', order: {total_formatted: '1 200,00 ₽'}, status: {name: 'Новая'}};
@@ -128,5 +129,37 @@ test('without credentials the runtime leaves demo mode active and rejects bookin
   const origin = 'http://127.0.0.1:' + server.address().port;
   assert.match(await (await fetch(origin + '/booknow-config.js')).text(), /"enabled":false/);
   const response = await fetch(origin + '/api/booking/catalog');
+  assert.equal(response.status, 503);
+});
+
+test('calendar reflects free seats, rejects impossible dates and removes elapsed times', async t => {
+  const f = setup(t);
+  assert.equal((await f.bookings.catalog()).locations[0].services[0].duration, 60);
+  assert.deepEqual((await f.bookings.calendar(f.input())).dates,
+    [{date: '2026-11-11', count: 2}, {date: '2026-11-12', count: 0}]);
+  await assert.rejects(f.bookings.calendar({...f.input(), date: '2026-11-31'}), {code: 'DATE'});
+  f.advance(86400000 + 6 * 3600000); // 13:00 in Barnaul on the selected day.
+  assert.deepEqual((await f.bookings.slots(f.input())).slots.map(slot => slot.start), ['14:00']);
+  assert.equal(f.calls.length, 0);
+});
+
+test('a hidden service price also stays hidden in slot responses', async t => {
+  const f = setup(t), original = f.client.list;
+  f.client.list = async path => (await original(path)).map(row => path.includes('/services') ? {...row, is_price_hidden: true} : row);
+  assert.equal((await f.bookings.catalog()).locations[0].services[0].priceLabel, '');
+  assert.equal((await f.bookings.slots(f.input())).slots[0].priceLabel, '');
+});
+
+test('enabling bookings does not enable the discount wheel', async t => {
+  const f = setup(t);
+  const server = createSiteServer({client: f.client, databasePath: ':memory:', secret: 'separate-promo-test-secret-'.repeat(3),
+    origins: ['https://arena.example']});
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const base = 'http://127.0.0.1:' + server.address().port;
+  assert.match(await (await fetch(base + '/booknow-config.js')).text(), /"enabled":true/);
+  assert.match(await (await fetch(base + '/promo-config.js')).text(), /"mode":"preview"/);
+  const response = await fetch(base + '/api/promo/claim', {method: 'POST', headers: {Origin: 'https://arena.example',
+    'Content-Type': 'application/json'}, body: '{}'});
   assert.equal(response.status, 503);
 });

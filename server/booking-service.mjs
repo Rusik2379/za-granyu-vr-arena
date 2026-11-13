@@ -40,8 +40,10 @@ export function createBookingService({client, promo, databasePath, secret, now =
       const services = await client.list(`/locations/${location.uuid}/services`);
       return {id: location.uuid, name: location.name, timezone: location.timezone?.name,
         services: services.filter(service => service.live !== false && service.live_in_widget !== false)
-          .map(service => ({id: service.uuid, name: service.name, duration: service.duration_without_pause || service.duration,
-            priceLabel: service.is_price_hidden ? '' : service.price_formatted, autoAllocate: service.is_auto_allocated === true,
+          .map(service => ({id: service.uuid, name: service.name, duration: service.is_duration_hidden ? null :
+            service.duration_without_pause || service.duration?.value || service.duration,
+            priceLabel: service.is_price_hidden ? '' : service.price_formatted, priceHidden: service.is_price_hidden === true,
+            autoAllocate: service.is_auto_allocated === true,
             collective: service.is_collective === true, kind: service.kind}))};
     }));
     catalogCache = {locations: result};
@@ -72,22 +74,41 @@ export function createBookingService({client, promo, databasePath, secret, now =
     return {staffers: rows.map(row => ({id: row.uuid, name: [row.first_name, row.last_name].filter(Boolean).join(' ') || row.position || 'Инструктор'}))};
   }
 
-  async function slots(input) {
-    await selection(input);
+  function dateRange(input, days = 1) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date || '') || !Number.isFinite(Date.parse(input.date))) {
       fail(400, 'DATE', 'Выберите дату');
     }
     const dateTime = Date.parse(input.date + 'T00:00:00Z');
+    if (new Date(dateTime).toISOString().slice(0, 10) !== input.date) fail(400, 'DATE', 'Проверьте дату посещения');
     if (dateTime < now() - 86400000 || dateTime > now() + 90 * 86400000) fail(400, 'DATE', 'Выберите дату в ближайшие 90 дней');
-    const end = new Date(dateTime + 86400000).toISOString().slice(0, 10);
+    return new Date(dateTime + days * 86400000).toISOString().slice(0, 10);
+  }
+
+  async function availability(input, days) {
+    const {service} = await selection(input);
+    const end = dateRange(input, days);
     const query = new URLSearchParams({service_uuid: input.serviceId, range_start: input.date, range_end: end});
     if (input.stafferId) query.set('staffer_uuid', input.stafferId);
     const result = await client.request(`/locations/${input.locationId}/time-slots?${query}`);
-    const day = result.dates?.find(item => item.date === input.date);
+    return {timezone: result.timezone, currency: result.currency, today: result.today,
+      dates: (result.dates || []).filter(day => day.date >= input.date && day.date <= end &&
+        Date.parse(day.date + 'T00:00:00Z') <= now() + 90 * 86400000).map(day => ({date: day.date,
+        slots: (day.slots || []).filter(slot => Number(slot.quantity) > 0 &&
+          /^\d{2}:\d{2}$/.test(slot.start) && Date.parse(slotToUtc(day.date, slot.start, result.timezone)) > now())
+          .map(slot => ({start: slot.start, end: slot.end, quantity: Number(slot.quantity),
+            priceLabel: service.priceHidden ? '' : slot.price_formatted}))}))};
+  }
+
+  async function slots(input) {
+    const result = await availability(input, 1);
     return {timezone: result.timezone, currency: result.currency,
-      slots: (day?.slots || []).filter(slot => Number(slot.quantity) > 0).map(slot => ({
-        start: slot.start, end: slot.end, quantity: Number(slot.quantity), priceLabel: slot.price_formatted
-      }))};
+      slots: result.dates.find(day => day.date === input.date)?.slots || []};
+  }
+
+  async function calendar(input) {
+    const result = await availability(input, 13);
+    return {timezone: result.timezone, today: result.today,
+      dates: result.dates.map(day => ({date: day.date, count: day.slots.length}))};
   }
 
   function previous(row, ownerHash) {
@@ -125,6 +146,7 @@ export function createBookingService({client, promo, databasePath, secret, now =
     }
     const reservedOn = slotToUtc(input.date, slot.start, available.timezone);
     if (Date.parse(reservedOn) <= now()) fail(409, 'SLOT', 'Это время уже прошло');
+    if (input.promoId && !promo) fail(400, 'PROMO_DISABLED', 'Бонусы сейчас недоступны. Оформите запись без скидки');
     const offer = input.promoId ? promo.forBooking({id: input.promoId, phone, clientToken: input.clientToken}) : null;
     if (offer && Date.parse(reservedOn) > Date.parse(offer.expiresAt)) fail(400, 'PROMO_VISIT_DATE', 'Для скидки выберите посещение до окончания срока бонуса');
     const fingerprint = hash([phone, input.locationId, input.serviceId, reservedOn].join('|'));
@@ -173,5 +195,5 @@ export function createBookingService({client, promo, databasePath, secret, now =
     db.prepare("UPDATE site_bookings SET state='confirmed', result=? WHERE request_id=?").run(JSON.stringify(result), input.requestId);
     return result;
   }
-  return {catalog, staffers, slots, book, close: () => db.close()};
+  return {catalog, staffers, slots, calendar, book, close: () => db.close()};
 }

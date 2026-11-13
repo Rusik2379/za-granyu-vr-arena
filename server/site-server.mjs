@@ -13,12 +13,12 @@ const mime = {'.html': 'text/html; charset=utf-8', '.js': 'text/javascript; char
   '.woff2': 'font/woff2', '.mp4': 'video/mp4'};
 
 export function createSiteServer({client, databasePath, secret, origins = [], siteDirectory = root,
-  prizes = [5, 7, 10, 5, 7, 5], validityDays = 14} = {}) {
+  promoEnabled = false, prizes = [5, 7, 10, 5, 7, 5], validityDays = 14} = {}) {
   let promo;
   let bookings;
   if (client) {
     mkdirSync(dirname(databasePath), {recursive: true});
-    promo = createPromoService({databasePath, secret, prizes, validityDays});
+    if (promoEnabled) promo = createPromoService({databasePath, secret, prizes, validityDays});
     bookings = createBookingService({client, promo, databasePath, secret});
   }
   const limits = new Map();
@@ -84,7 +84,8 @@ export function createSiteServer({client, databasePath, secret, origins = [], si
           case '/api/booking/catalog': return json(200, await bookings.catalog());
           case '/api/booking/staffers': return json(200, await bookings.staffers(input));
           case '/api/booking/slots': return json(200, await bookings.slots(input));
-          case '/api/promo/config': return json(200, {mode: 'live', prizes, validityDays});
+          case '/api/booking/calendar': return json(200, await bookings.calendar(input));
+          case '/api/promo/config': return json(200, {mode: promo ? 'live' : 'preview', prizes, validityDays});
           default: return json(404, {message: 'Не найдено'});
         }
       }
@@ -103,7 +104,8 @@ export function createSiteServer({client, databasePath, secret, origins = [], si
       catch {throw new PromoError(400, 'JSON', 'Некорректный запрос');}
       if (!input || typeof input !== 'object' || Array.isArray(input)) throw new PromoError(400, 'JSON', 'Некорректный запрос');
       if (url.pathname === '/api/booking/create') return json(200, await bookings.book(input));
-      if (url.pathname === '/api/promo/claim') return json(200, promo.claim(input, identity || 'unknown'));
+      if (url.pathname === '/api/promo/claim') return promo ? json(200, promo.claim(input, identity || 'unknown'))
+        : json(503, {message: 'Бонусы пока не подключены'});
       return json(404, {message: 'Не найдено'});
     } catch (error) {
       if (res.headersSent) return res.destroy();
@@ -124,6 +126,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const server = createSiteServer({
     client: enabled ? createBookNowClient({token: process.env.BOOKNOW_API_KEY, workspace: process.env.BOOKNOW_WORKSPACE}) : null,
     databasePath: resolve(process.env.PROMO_DB_PATH || '.data/promo.sqlite'), secret: process.env.PROMO_SECRET,
+    promoEnabled: process.env.PROMO_ENABLED === 'true',
     origins: (process.env.ALLOWED_ORIGINS || 'https://za-granyu22.ru').split(',').map(value => value.trim())
   });
   const port = Number(process.env.PORT || 4180);

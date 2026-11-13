@@ -3,7 +3,7 @@
   const settings = window.ZG_BOOKING_CONFIG || {enabled: false};
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[char]));
   const option = (value, label) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`;
-  const localDate = () => new Intl.DateTimeFormat('en-CA', {timeZone: 'Asia/Barnaul', year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date());
+  const localDate = (days = 0) => new Intl.DateTimeFormat('en-CA', {timeZone: 'Asia/Barnaul', year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date(Date.now() + days * 86400000));
   let catalogPromise;
 
   function clientToken() {
@@ -37,11 +37,12 @@
       ${offer ? `<div class="booking-discount"><strong>Твоя скидка −${escapeHtml(offer.discountPercent)}%</strong><span>До ${escapeHtml(new Date(offer.expiresAt).toLocaleDateString('ru-RU'))} · ${escapeHtml(offer.id)}</span><p>Бонус проверяется по номеру телефона. Администратор применит скидку к стоимости в BookNow.</p></div>` : ''}
       <fieldset class="booking-fields"><legend class="form-section-title">01 / Услуга и свободное время</legend>
         <div class="form-grid">
-          <label class="field"><span>Локация</span><select name="locationId" required disabled>${option('', 'Загружаем BookNow…')}</select></label>
-          <label class="field"><span>Услуга</span><select name="serviceId" required disabled>${option('', 'Сначала выберите локацию')}</select></label>
+          <label class="field" data-location><span>Локация</span><select name="locationId" required disabled>${option('', 'Загружаем BookNow…')}</select></label>
+          <label class="field full"><span>Услуга</span><select name="serviceId" required disabled>${option('', 'Сначала выберите локацию')}</select></label>
           <label class="field" data-staffer><span>Инструктор / арена</span><select name="stafferId" disabled></select></label>
-          <label class="field"><span>Дата посещения</span><input type="date" name="date" required min="${localDate()}" value="${localDate()}"></label>
+          <label class="field"><span>Дата посещения</span><input type="date" name="date" required min="${localDate()}" max="${localDate(90)}" value="${localDate()}"></label>
           <label class="field"><span>Свободное время</span><select name="time" required disabled>${option('', 'Выберите услугу')}</select></label>
+          <div class="booking-calendar full" hidden><p class="booking-calendar-title">Ближайшие даты <span>Время Барнаула · UTC+7</span></p><div class="booking-days" data-days aria-label="Доступные даты"></div><p class="muted small" data-calendar-note aria-live="polite"></p></div>
           <label class="field" data-quantity hidden><span>Количество мест</span><select name="quantity">${option('1', '1')}</select></label>
           <label class="field"><span>Гостей в компании</span><select name="guests">${Array.from({length: 10}, (_, index) => option(String(index + 1), String(index + 1))).join('')}</select></label>
           <label class="field full"><span>Пожелание по сценарию</span><select name="scenario">${option('', 'Помогите выбрать игру')}${scenarios.map(game => `<option value="${escapeHtml(game.title)}"${opts.game === game.id ? ' selected' : ''}>${escapeHtml(game.title)}</option>`).join('')}</select></label>
@@ -78,9 +79,47 @@
     let service;
     let slots = [];
     let generation = 0;
+    let calendarGeneration = 0;
+    let calendarDates = [];
     let requestId = crypto.randomUUID();
     let busy = false;
     let locked = false;
+
+    function highlightDate() {
+      element.querySelectorAll('[data-date]').forEach(button => {
+        button.setAttribute('aria-pressed', String(button.dataset.date === field('date').value));
+      });
+    }
+
+    async function loadCalendar() {
+      const version = ++calendarGeneration;
+      calendarDates = [];
+      const calendar = element.querySelector('.booking-calendar');
+      const note = element.querySelector('[data-calendar-note]');
+      const days = element.querySelector('[data-days]');
+      days.innerHTML = '';
+      calendar.hidden = !service;
+      if (!service || (!service.autoAllocate && !field('stafferId').value)) return;
+      note.textContent = 'Загружаем ближайшие 14 дней…';
+      try {
+        const result = await api('calendar?' + new URLSearchParams({locationId: location.id, serviceId: service.id,
+          stafferId: field('stafferId').value, date: field('date').value}));
+        if (version !== calendarGeneration || !element.isConnected) return;
+        calendarDates = result.dates;
+        days.innerHTML = calendarDates.map(day => {
+          const date = new Date(day.date + 'T12:00:00Z');
+          return `<button type="button" class="booking-day" data-date="${escapeHtml(day.date)}" aria-pressed="false" ${day.count ? '' : 'disabled'}
+            aria-label="${escapeHtml(date.toLocaleDateString('ru-RU', {timeZone: result.timezone, day: 'numeric', month: 'long'}))}: ${day.count ? 'есть свободное время' : 'нет свободного времени'}">
+            <span>${escapeHtml(date.toLocaleDateString('ru-RU', {timeZone: result.timezone, weekday: 'short'}))}</span>
+            <strong>${escapeHtml(date.toLocaleDateString('ru-RU', {timeZone: result.timezone, day: 'numeric', month: '2-digit'}))}</strong>
+            <small>${day.count ? 'есть время' : 'нет мест'}</small></button>`;
+        }).join('');
+        highlightDate();
+        note.textContent = 'Недоступные дни нельзя выбрать здесь. Другую дату можно указать в поле выше.';
+      } catch (failure) {
+        if (version === calendarGeneration && element.isConnected) note.textContent = failure.message;
+      }
+    }
 
     function summary() {
       const slot = slots.find(item => item.start === field('time').value);
@@ -133,6 +172,9 @@
 
     async function loadService() {
       const version = ++generation;
+      ++calendarGeneration;
+      calendarDates = [];
+      element.querySelector('.booking-calendar').hidden = true;
       service = location.services.find(item => item.id === field('serviceId').value);
       slots = [];
       submit.disabled = true;
@@ -142,7 +184,7 @@
       field('time').innerHTML = option('', 'Выберите услугу');
       element.querySelector('[data-staffer]').hidden = !service || service.autoAllocate;
       element.querySelector('[data-service-note]').textContent = service
-        ? `${service.name}${service.duration ? ' · ' + service.duration + ' мин' : ''}. ${service.collective ? 'Количество мест определяет число бронируемых мест.' : 'Оформляется один сеанс выбранной услуги.'} Число гостей и пожелание по игре передадим администратору.` : '';
+        ? `${service.duration ? service.duration + ' минут. ' : ''}${service.collective ? 'Количество мест определяет число бронируемых мест.' : 'Оформляется один сеанс выбранной услуги.'} Число гостей и пожелание по игре передадим администратору.` : '';
       summary();
       if (!service) return;
       try {
@@ -151,8 +193,9 @@
           if (version !== generation || !element.isConnected) return;
           field('stafferId').innerHTML = result.staffers.map(item => option(item.id, item.name)).join('');
           field('stafferId').disabled = false;
+          element.querySelector('[data-staffer]').hidden = result.staffers.length === 1;
         }
-        await loadSlots();
+        await Promise.all([loadCalendar(), loadSlots()]);
       } catch (failure) {
         if (version === generation && element.isConnected) availability.textContent = failure.message;
       }
@@ -169,16 +212,28 @@
       error.textContent = '';
       switch (event.target.name) {
         case 'serviceId': void loadService(); break;
-        case 'date': case 'stafferId': void loadSlots(); break;
+        case 'stafferId': void loadCalendar(); void loadSlots(); break;
+        case 'date':
+          highlightDate();
+          if (!calendarDates.some(day => day.date === field('date').value)) void loadCalendar();
+          void loadSlots(); break;
         case 'time': updateQuantity(); break;
         case 'quantity': summary(); break;
       }
+    });
+    element.addEventListener('click', event => {
+      const button = event.target.closest('[data-date]');
+      if (!button || button.disabled || busy || locked) return;
+      field('date').value = button.dataset.date;
+      field('date').dispatchEvent(new Event('change', {bubbles: true}));
     });
     element.addEventListener('submit', async event => {
       event.preventDefault();
       if (busy || locked || !element.reportValidity()) return;
       busy = true;
       submit.disabled = true;
+      const buttonText = submit.textContent;
+      submit.textContent = 'Оформляем запись…';
       error.textContent = '';
       const data = Object.fromEntries(new FormData(element));
       const controls = [...element.elements].filter(control => !control.disabled);
@@ -200,7 +255,7 @@
         else if (failure.code) requestId = crypto.randomUUID();
       } finally {
         busy = false;
-        if (element.isConnected && !locked) {controls.forEach(control => {control.disabled = false;}); summary();}
+        if (element.isConnected && !locked) {controls.forEach(control => {control.disabled = false;}); submit.textContent = buttonText; summary();}
       }
     });
 
@@ -210,6 +265,7 @@
       if (!element.isConnected) return;
       field('locationId').innerHTML = result.locations.map(item => option(item.id, item.name)).join('');
       field('locationId').disabled = false;
+      element.querySelector('[data-location]').hidden = result.locations.length === 1;
       field('locationId').addEventListener('change', () => {void loadLocation(result.locations);});
       availability.textContent = result.locations.length ? 'Выберите услугу и дату посещения' : 'В BookNow пока нет доступных локаций';
       await loadLocation(result.locations);

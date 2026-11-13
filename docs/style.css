@@ -140,4 +140,4 @@ body.locked .promo-tab{opacity:0;visibility:hidden;pointer-events:none}
 .booking-panel .booknow-form [data-availability]{font-size:12px;color:#9aabc5}
 .booking-panel .booknow-form .booking-form-bottom .consent{font-size:12px}
 .booknow-form .field select{max-width:100%;text-overflow:ellipsis}
-@media(max-width:640px){.booking-calendar-title{align-items:flex-start;flex-direction:column;gap:5px}.booking-calendar-title span{align-self:flex-start}.booking-days{gap:5px}.booking-day{padding:10px 0}.booking-day strong{font-size:11px}.booking-day small{font-size:7px}}
+@media(max-width:640px){.booking-calendar-title{align-items:flex-start;flex-direction:column;gap:5px}.booking-calendar-title span{align-self:flex-start}.booking-days{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.booking-day{padding:12px 0}.booking-day strong{font-size:13px}.booking-day small{font-size:10px}}

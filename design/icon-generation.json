@@ -1,0 +1,121 @@
+{
+  "mode": "built-in image_gen",
+  "background": "transparent",
+  "icons": [
+    {
+      "name": "arrow",
+      "asset": "dist/assets/icons/arrow.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: One bold navigation arrow pointing horizontally RIGHT, with a substantial straight shaft and a single broad arrowhead. Simple unmistakable silhouette."
+    },
+    {
+      "name": "left",
+      "asset": "dist/assets/icons/left.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: One bold navigation arrow pointing horizontally LEFT, with a substantial straight shaft and a single broad arrowhead. Simple unmistakable silhouette."
+    },
+    {
+      "name": "users",
+      "asset": "dist/assets/icons/users.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: A group of three simplified sculpted human upper-body silhouettes, one slightly larger central teammate and two flanking teammates, representing a team."
+    },
+    {
+      "name": "headset",
+      "asset": "dist/assets/icons/headset.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: A premium wireless virtual reality headset with a broad visor and side strap, recognizably a VR headset, no human head."
+    },
+    {
+      "name": "move",
+      "asset": "dist/assets/icons/move.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: A bold four-direction freedom-of-movement cross formed by four outward-pointing arrowheads joined in the center."
+    },
+    {
+      "name": "target",
+      "asset": "dist/assets/icons/target.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: A precision aiming reticle, one thick circular ring with four short crosshair ticks extending outward at the top, bottom, left and right. A small bright center dot. Clean bold geometry."
+    },
+    {
+      "name": "gift",
+      "asset": "dist/assets/icons/gift.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: One compact premium gift box with a bold ribbon crossing its front and two ribbon loops on top, symbolizing a birthday present."
+    },
+    {
+      "name": "shield",
+      "asset": "dist/assets/icons/shield.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: A solid protective angular shield with one unmistakable inset checkmark, representing an instructor ensuring safety."
+    },
+    {
+      "name": "clock",
+      "asset": "dist/assets/icons/clock.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: One clean round analog clock with only two thick hands showing ten past ten. No digits, no lettering, no fine tick marks."
+    },
+    {
+      "name": "pin",
+      "asset": "dist/assets/icons/pin.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: One solid sculpted map location pin, a rounded teardrop with a circular opening in its upper center, tip pointing straight down."
+    },
+    {
+      "name": "phone",
+      "asset": "dist/assets/icons/phone.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: One classic telephone handset with broad earpiece and mouthpiece, diagonally arranged, a simple bold recognizable telephone receiver."
+    },
+    {
+      "name": "close",
+      "asset": "dist/assets/icons/close.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: One thick bold symmetrical X-shaped close symbol made of two crossed beveled bars. No surrounding shape."
+    },
+    {
+      "name": "menu",
+      "asset": "dist/assets/icons/menu.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: Exactly three short thick horizontal beveled bars, stacked with equal spacing, representing a hamburger navigation menu. No surrounding shape."
+    },
+    {
+      "name": "check",
+      "asset": "dist/assets/icons/check.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: One bold thick checkmark tick with a short left arm and a longer rising right arm. No surrounding shape."
+    },
+    {
+      "name": "info",
+      "asset": "dist/assets/icons/info.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: An information indicator formed only from a broad upright rounded vertical bar and a round detached dot above it, centered together. No surrounding shape or text."
+    },
+    {
+      "name": "star",
+      "asset": "dist/assets/icons/star.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: One substantial symmetric five-point star, simple clear silhouette, raised silver face and dark metal bevels."
+    },
+    {
+      "name": "trophy",
+      "asset": "dist/assets/icons/trophy.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: One polished trophy cup with two handles, a short stem and a sturdy pedestal, celebrating team victory."
+    },
+    {
+      "name": "coffee",
+      "asset": "dist/assets/icons/coffee.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: One modern sculpted lounge coffee cup with a visible handle on the right and two short clean stylized steam wisps above it, no saucer."
+    },
+    {
+      "name": "bolt",
+      "asset": "dist/assets/icons/bolt.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: One bold diagonal lightning bolt, simple powerful zigzag silhouette with a sharp upper tip and lower tip."
+    },
+    {
+      "name": "calendar",
+      "asset": "dist/assets/icons/calendar.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: One small thick calendar sheet with two binding tabs across its top and four bold square embossed date cells, no numbers, no letters."
+    },
+    {
+      "name": "plus",
+      "asset": "dist/assets/icons/plus.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: One bold thick symmetrical plus sign made of intersecting horizontal and vertical beveled bars of equal length, no surrounding shape."
+    },
+    {
+      "name": "minus",
+      "asset": "dist/assets/icons/minus.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: One bold thick horizontal beveled minus bar, centered, no surrounding shape."
+    },
+    {
+      "name": "play",
+      "asset": "dist/assets/icons/play.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one isolated raster UI icon for a premium Russian VR arena website, black/red/electric-blue esports art direction. A polished sculpted 3D graphite titanium object with substantial bright silver faces, vivid red rim light on the left and electric cyan-blue highlights on the right. Carefully beveled futuristic geometry, restrained subtle glow, clean readable bold silhouette suitable at 32-64px. Front-facing product icon with very slight depth, centered, fills about 80% of a square canvas. Genuine transparent alpha background. No floor, no scenery, no card, no framing border, no circle behind the object, no text, no letters, no watermark. Exactly one icon, not a sprite sheet. Keep small details minimal so it remains clear in a navigation interface.\nSubject: One bold thick triangular play-button symbol pointing horizontally RIGHT. A simple solid beveled triangle, no shaft, no surrounding shape."
+    }
+  ]
+}

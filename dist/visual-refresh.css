@@ -1,0 +1,88 @@
+/* Keep the photo, copy and controls in the same frame on every home slide. */
+.hero.home-hero{height:clamp(750px,calc(100svh - 92px),900px);min-height:0}
+.hero.home-hero .hero-art{inset:0;background:none!important}
+.hero-slide-image{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;object-position:72% center;opacity:0;transition:opacity .4s ease}
+.home-hero[data-slide="0"] .hero-slide-image:nth-child(1),.home-hero[data-slide="1"] .hero-slide-image:nth-child(2),.home-hero[data-slide="2"] .hero-slide-image:nth-child(3){opacity:1}
+.hero.home-hero .hero-inner{height:100%;padding-top:38px;padding-bottom:130px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
+.home-hero .hero-topline{margin-bottom:26px}
+.home-hero .eyebrow{margin-bottom:22px}
+.hero-title-slot{height:264px;width:100%;flex-shrink:0}
+.hero.home-hero #hero-title{font-size:clamp(52px,5.2vw,78px);line-height:1.08;max-width:1000px;letter-spacing:-1.8px}
+.hero-description-slot{height:126px;width:100%;flex-shrink:0;padding:18px 0 22px}
+.hero.home-hero #hero-sub{font-size:15px;line-height:1.8;max-width:480px;margin:0}
+.home-hero .hero-actions{flex-shrink:0}
+.home-hero .hero-hud:before{display:none}
+.home-hero .hero-bottom-inner{min-height:104px}
+
+/* Individually generated transparent images replace all custom UI glyphs. */
+.site-icon{display:inline-block;width:24px;height:24px;max-width:none;object-fit:contain;vertical-align:middle;flex-shrink:0}
+.btn .site-icon,.text-link .site-icon,.backtop .site-icon{width:22px;height:22px}
+.icon-btn .site-icon,.header-phone .site-icon,.menu-toggle .site-icon,.modal-close .site-icon{width:25px;height:25px}
+.hero-badges .site-icon{width:32px;height:32px}
+.hero-hud .site-icon{width:32px;height:32px}
+.play-format-icon{margin:24px 0 18px}
+.play-format-icon .site-icon{width:88px;height:88px}
+.play-format-foot .site-icon{width:26px;height:26px}
+.feature-row>.site-icon{width:42px;height:42px}
+.included>.site-icon{width:60px;height:60px;margin-bottom:20px}
+.visual-label .site-icon,.number-item>.site-icon{width:36px;height:36px}
+.yandex-map-heading>.site-icon{width:36px;height:36px}
+.contact-info a .site-icon{width:22px;height:22px;margin-left:8px}
+.contact-social-links .site-icon{width:20px;height:20px}
+.game-meta .site-icon,.game-foot .site-icon{width:22px;height:22px}
+.price-card li:before{display:none}
+.price-card li .site-icon{width:22px;height:22px}
+.faq-list summary:after{display:none}
+.faq-toggle{position:absolute;right:0;top:50%;transform:translateY(-50%);display:flex}
+.faq-toggle .site-icon{width:24px;height:24px}
+.faq-toggle .icon-minus,.faq-list details[open] .faq-toggle .icon-plus{display:none}
+.faq-list details[open] .faq-toggle .icon-minus{display:block}
+.promo-tab-art .site-icon{width:42px;height:42px}
+.promo-tab-arrow .site-icon{width:20px;height:20px}
+.promo-benefits .site-icon,.promo-art-footer .site-icon{width:20px;height:20px}
+.booking-discount-icon .site-icon{width:32px;height:32px}
+.success>.site-icon{width:48px;height:48px}
+.success-icon .site-icon{width:40px;height:40px}
+.stars{display:inline-flex;gap:3px;letter-spacing:0}
+.stars .site-icon{width:19px;height:19px}
+.game-video-label .site-icon{width:18px;height:18px}
+@media(min-width:1600px){.hero.home-hero #hero-title{font-size:78px}}
+@media(max-width:1100px){
+  .hero.home-hero{height:780px}
+  .hero.home-hero #hero-title{font-size:60px;max-width:850px}
+  .hero-title-slot{height:225px}
+  .hero-description-slot{height:130px}
+  .home-hero .hero-bottom-inner{min-height:120px}
+}
+@media(max-width:850px){
+  .hero.home-hero #hero-title{font-size:52px}
+  .hero-title-slot{height:225px}
+  .hero.home-hero .hero-inner{padding-bottom:160px}
+  .home-hero .hero-bottom-inner{min-height:140px}
+  .hero-badges .site-icon{width:28px;height:28px}
+}
+@media(max-width:640px){
+  .hero.home-hero{height:900px}
+  .hero.home-hero .hero-art{inset:275px -110px 0 -30px}
+  .hero-slide-image{object-position:72% center}
+  .hero.home-hero .hero-inner{justify-content:flex-start;padding-top:28px;padding-bottom:210px}
+  .home-hero .hero-topline{margin-bottom:24px}
+  .home-hero .eyebrow{font-size:9px;letter-spacing:1px;margin-bottom:20px}
+  .hero.home-hero #hero-title{font-size:clamp(31px,8.1vw,38px);line-height:1.12;letter-spacing:-.7px;max-width:100%}
+  .hero-title-slot{height:216px}
+  .hero-description-slot{height:142px;padding:18px 0 20px}
+  .hero.home-hero #hero-sub{font-size:14px;line-height:1.8;max-width:355px}
+  .home-hero .hero-actions{gap:10px;max-width:355px}
+  .home-hero .hero-actions .btn{font-size:13px;min-height:52px;width:100%;justify-content:space-between;padding:12px 18px}
+  .home-hero .hero-bottom-inner{min-height:185px;padding-top:18px;padding-bottom:18px;align-items:flex-start;flex-direction:column;gap:16px}
+  .home-hero .hero-badges{gap:8px}
+  .home-hero .hero-badges span{font-size:13px}
+  .home-hero .slide-controls{align-self:flex-end;gap:10px}
+  .home-hero .slide-controls .icon-btn{width:36px;height:34px}
+  .home-hero .slide-num{margin-right:5px;font-size:14px}
+  .hero-badges .site-icon{width:28px;height:28px}
+  .play-format-icon .site-icon{width:76px;height:76px}
+  .promo-tab-art .site-icon{width:32px;height:32px}
+  .promo-tab-arrow .site-icon{width:17px;height:17px}
+}
+@media(prefers-reduced-motion:reduce){.hero-slide-image{transition:none}}

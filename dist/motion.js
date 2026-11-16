@@ -26,12 +26,12 @@
   }
   function animateHero() {
     if (preference.matches) return;
-    ['.hero h1','.hero-sub','.hero-actions'].forEach((selector,index) => {
+    ['.hero h1','.hero-sub'].forEach((selector,index) => {
       const element=document.querySelector(selector);
       if (!element?.animate) return;
       element.getAnimations().forEach(animation=>animation.cancel());
-      element.animate([{opacity:0,transform:'translateY(16px)'},{opacity:1,transform:'translateY(0)'}],
-        {duration:650,delay:index*65,easing:'cubic-bezier(.2,.65,.3,1)',fill:'backwards'});
+      element.animate([{opacity:0},{opacity:1}],
+        {duration:350,delay:0,easing:'ease-out',fill:'backwards'});
     });
   }
   const app=document.querySelector('#app');
@@ -45,9 +45,7 @@
     const element=event.target.closest('.motion-reveal');
     if (element) show(element);
   });
-  document.addEventListener('click',event => {
-    if (event.target.closest('[data-action="slide"]')) animateHero();
-  });
+  document.addEventListener('zg:hero-slide',animateHero);
   preference.addEventListener('change',() => {
     if (preference.matches) {
       document.querySelectorAll('.motion-reveal').forEach(show);

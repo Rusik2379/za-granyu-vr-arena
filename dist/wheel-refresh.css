@@ -1,0 +1,49 @@
+/* Brighter game-show wheel with a fixed pointer and six honest prize sectors. */
+.promo-modal{max-width:1070px;background:#0b0e16;border-color:#34405a;border-radius:12px;box-shadow:0 28px 140px #000c,0 0 65px #1279ff18}
+.promo-layout{grid-template-columns:1.08fr 1fr;min-height:645px}
+.promo-art{padding:32px 26px 24px;background:radial-gradient(ellipse at 15% 90%,#005dff25,transparent 60%),radial-gradient(ellipse at 90% 5%,#ff184327,transparent 60%),#0b101c;border-right:1px solid #273147}
+.promo-art:before{background-size:48px 48px;opacity:.6}
+.promo-art-topline{font-size:10px;letter-spacing:1.3px;color:#b2c4df}
+.promo-max{background:#123b55;color:#a9f1ff;border-color:#37bbff55;border-radius:3px;font-size:13px;padding:9px 10px}
+.promo-wheel-stage{margin:30px 0 8px;padding-top:12px}
+.promo-modal .wheel-wrap{max-width:425px}
+.promo-modal .wheel{box-shadow:0 0 38px #168bff2b,0 18px 35px #0009}
+.promo-wheel-orbit{width:105%;top:42%;border-color:#3eb8ff26;box-shadow:0 0 75px #168bff20,inset 0 0 65px #ff303d08}
+.promo-wheel-orbit:before{inset:13px;border-color:#71c6ff20}.promo-wheel-orbit:after{inset:-18px;border-color:#ff52601a}
+.promo-wheel-svg .promo-sector-value{fill:#fff;font:40px var(--display);letter-spacing:-1.5px;paint-order:stroke;stroke:#0000000a;stroke-width:1px}
+.promo-wheel-svg .promo-sector-percent{font-size:25px}
+.promo-wheel-svg .promo-sector-caption{fill:#edf7ff;opacity:.85;font:8px var(--font);font-weight:800;letter-spacing:1.1px}
+.promo-sector.is-winning>path{stroke:#fff;stroke-width:3}
+.promo-pointer{top:-7px;width:29px;height:37px;background:#f6fbff;filter:drop-shadow(0 0 8px #3ec5ff99);clip-path:polygon(10% 0,90% 0,100% 20%,50% 100%,0 20%)}
+.promo-wheel-hub{width:25%;border:3px solid #c9efff;background:#0a1220;box-shadow:0 0 20px #008cff55,0 4px 15px #0008;gap:6px}
+.promo-wheel-hub:before{inset:-8px;border:1px solid #28aaff70}
+.promo-wheel-hub .site-icon{width:60%;height:auto;aspect-ratio:1;object-fit:contain}
+.promo-wheel-hub small{font:800 7px var(--font);letter-spacing:1.4px;color:#b9e8ff}
+.promo-prize-strip{display:flex;justify-content:center;gap:9px;margin-top:24px}
+.promo-prize-strip>span{font:17px var(--display);color:#fff;padding:8px 16px;border:1px solid #2f4e73;background:#101d31;border-radius:4px}
+.promo-prize-strip>span:last-child{border-color:#29b7e5;background:#10374a;color:#aef5ff}
+.promo-wheel-caption{font-size:11px;margin-top:14px;text-align:center;color:#a0b8d8}
+.promo-art-footer{color:#adbed5;font-size:11px}
+.promo-details{padding:46px 38px 32px}
+.promo-details .eyebrow{font-size:10px;color:#d1ddef}
+.promo-details h2{font-size:38px;line-height:1.15;margin:17px 0 19px}
+.promo-details h2 span{color:#ff455a}
+.promo-details .modal-intro{font-size:15px;line-height:1.7;color:#b1bed3}
+.promo-benefits{margin:18px 0 24px;gap:8px}
+.promo-benefits>span{font-size:11px;padding:8px 9px;color:#d5e6ff;border-color:#26354f;background:#111d30;border-radius:4px}
+.promo-details .field{font-size:13px}
+.promo-details input:not([type=checkbox]){min-height:52px;border-radius:4px;background:#080c14;border-color:#33405a;font-size:15px}
+.promo-details .consent{font-size:11px;line-height:1.7;color:#9dadc5}
+.promo-details .btn{min-height:55px;font-size:15px;border-radius:4px;background:var(--red);box-shadow:0 5px 23px #ff303d20}
+.promo-details .btn:hover{background:#ff4955}
+.promo-details .btn-outline{background:transparent;border-color:#374862;box-shadow:none;color:#becde4}
+.promo-details .btn-outline:hover{background:#142035;border-color:#5f7ca3}
+.promo-details .promo-rules{font-size:11px;line-height:1.7;color:#8c9fbb}
+.promo-details .promo-result p{font-size:14px;line-height:1.8}
+.promo-details .promo-discount{font-size:78px;line-height:1.1;color:#66d6ff;text-shadow:0 0 30px #198bff33;margin-bottom:16px}
+.promo-modal.is-spinning .promo-wheel-orbit{animation:bonus-pulse 1s ease-in-out infinite alternate}
+@keyframes bonus-pulse{to{box-shadow:0 0 95px #168bff55,inset 0 0 65px #ff303d20}}
+@media(max-width:850px){.promo-art{padding-inline:18px}.promo-details{padding-inline:25px}.promo-details h2{font-size:31px}.promo-details .modal-intro{font-size:14px}.promo-art-topline{font-size:8px}.promo-wheel-hub small{font-size:5px;letter-spacing:1px}}
+@media(max-width:640px){.promo-layout{grid-template-columns:1fr;min-height:0}.promo-art{padding:23px 22px 16px;border-right:0;border-bottom:1px solid #273147}.promo-art-topline{font-size:9px;padding-right:28px}.promo-max{font-size:11px;padding:7px}.promo-wheel-stage{max-width:290px;margin:17px auto 0}.promo-modal .wheel-wrap{max-width:290px}.promo-prize-strip{margin-top:17px;gap:7px}.promo-prize-strip>span{font-size:14px;padding:7px 14px}.promo-wheel-hub small{font-size:5px}.promo-details{padding:27px 24px}.promo-details h2{font-size:32px;margin-top:14px}.promo-details .modal-intro{font-size:14px}.promo-details .btn{font-size:14px}.promo-benefits{margin:15px 0 21px}.promo-benefits>span{font-size:11px}.promo-details .consent{font-size:12px}.promo-details .promo-rules{font-size:11px}}
+@media(max-width:380px){.promo-art{padding-inline:16px}.promo-art-topline{font-size:7px;letter-spacing:1px}.promo-wheel-stage,.promo-modal .wheel-wrap{max-width:244px}.promo-details{padding:24px 20px}.promo-details h2{font-size:29px}.promo-details .promo-discount{font-size:66px}}
+@media(prefers-reduced-motion:reduce){.promo-modal.is-spinning .promo-wheel-orbit{animation:none}}

@@ -148,6 +148,33 @@ test('calendar reflects free seats, rejects impossible dates and removes elapsed
   assert.equal(f.calls.length, 0);
 });
 
+test('only hourly starts are displayed, counted and accepted for a new booking', async t => {
+  const f = setup(t), original = f.client.request;
+  f.client.request = async (path, body) => {
+    if (path.includes('/time-slots?')) return {timezone: 'Asia/Barnaul', currency: 'RUB',
+      dates: [{date: '2026-11-11', slots: ['12:00', '12:15', '12:30', '12:45', '13:00', '25:00']
+        .map(start => ({start, end: '14:00', quantity: 1, price: 120000, price_formatted: '1 200,00 ₽'}))},
+        {date: '2026-11-12', slots: [{start: '12:15', end: '13:15', quantity: 1}]}]};
+    return original(path, body);
+  };
+  assert.deepEqual((await f.bookings.slots(f.input())).slots.map(slot => slot.start), ['12:00', '13:00']);
+  assert.deepEqual((await f.bookings.calendar(f.input())).dates,
+    [{date: '2026-11-11', count: 2}, {date: '2026-11-12', count: 0}]);
+  await assert.rejects(f.bookings.book({...f.input(), time: '12:15'}), {code: 'SLOT'});
+  assert.equal(f.calls.length, 0);
+  assert.equal((await f.bookings.slots(f.input())).stepMinutes, 60);
+});
+
+test('a month calendar requests a bounded range and clips the single-day response', async t => {
+  const f = setup(t), original = f.client.request, queries = [];
+  f.client.request = async (path, body) => {if (path.includes('/time-slots?')) queries.push(new URL('https://test.invalid' + path).searchParams); return original(path, body);};
+  await f.bookings.calendar({...f.input(), days: '31'});
+  assert.equal(queries[0].get('range_start'), '2026-11-11');
+  assert.equal(queries[0].get('range_end'), '2026-12-11');
+  assert.deepEqual((await f.bookings.calendar({...f.input(), days: '1'})).dates, [{date: '2026-11-11', count: 2}]);
+  for (const days of ['0', '32', '1.5', 'bad']) await assert.rejects(f.bookings.calendar({...f.input(), days}), {code: 'RANGE'});
+});
+
 test('a hidden service price also stays hidden in slot responses', async t => {
   const f = setup(t), original = f.client.list;
   f.client.list = async path => (await original(path)).map(row => path.includes('/services') ? {...row, is_price_hidden: true} : row);

@@ -95,7 +95,7 @@ export function createBookingService({client, promo, databasePath, secret, now =
       dates: (result.dates || []).filter(day => day.date >= input.date && day.date <= end &&
         Date.parse(day.date + 'T00:00:00Z') <= now() + 90 * 86400000).map(day => ({date: day.date,
         slots: (day.slots || []).filter(slot => Number(slot.quantity) > 0 &&
-          /^\d{2}:\d{2}$/.test(slot.start) && Date.parse(slotToUtc(day.date, slot.start, result.timezone)) > now())
+          /^(?:[01]\d|2[0-3]):00$/.test(slot.start) && Date.parse(slotToUtc(day.date, slot.start, result.timezone)) > now())
           .map(slot => ({start: slot.start, end: slot.end, quantity: Number(slot.quantity),
             priceMinor: service.priceHidden ? null : slot.price,
             priceLabel: service.priceHidden ? '' : slot.price_formatted}))}))};
@@ -103,14 +103,17 @@ export function createBookingService({client, promo, databasePath, secret, now =
 
   async function slots(input) {
     const result = await availability(input, 1);
-    return {timezone: result.timezone, currency: result.currency,
+    return {timezone: result.timezone, currency: result.currency, stepMinutes: 60,
       slots: result.dates.find(day => day.date === input.date)?.slots || []};
   }
 
   async function calendar(input) {
-    const result = await availability(input, 13);
-    return {timezone: result.timezone, today: result.today,
-      dates: result.dates.map(day => ({date: day.date, count: day.slots.length}))};
+    const days = Number(input.days ?? 14);
+    if (!Number.isInteger(days) || days < 1 || days > 31) fail(400, 'RANGE', 'Выберите период до 31 дня');
+    const result = await availability(input, Math.max(1, days - 1));
+    const end = new Date(Date.parse(input.date + 'T00:00:00Z') + (days - 1) * 86400000).toISOString().slice(0, 10);
+    return {timezone: result.timezone, today: result.today, stepMinutes: 60,
+      dates: result.dates.filter(day => day.date <= end).map(day => ({date: day.date, count: day.slots.length}))};
   }
 
   function previous(row, ownerHash) {

@@ -39,12 +39,16 @@
     return config;
   }
   function wheelArtwork() {
-    const colors=[['#ff6570','#d81735'],['#293c59','#111c30'],['#3aa3ff','#145ac4'],['#293c59','#111c30'],['#ff6570','#d81735'],['#293c59','#111c30']];
     const point=(angle,radius)=>[200+Math.sin(angle*Math.PI/180)*radius,200-Math.cos(angle*Math.PI/180)*radius];
-    const gradients=colors.map(([light,dark],i)=>`<radialGradient id="sector-${i}" cx="45%" cy="0%" r="110%"><stop stop-color="${light}"/><stop offset="1" stop-color="${dark}"/></radialGradient>`).join('');
-    const sectors=rules.prizes.map((prize,i)=>{const [x1,y1]=point(i*60,183),[x2,y2]=point((i+1)*60,183),[tx,ty]=point(i*60+30,126);return `<path d="M200 200L${x1} ${y1}A183 183 0 0 1 ${x2} ${y2}Z" fill="url(#sector-${i})" stroke="#ffffff25" stroke-width="1"/><text x="${tx}" y="${ty+4}" text-anchor="middle" class="promo-sector-value">−${prize}<tspan class="promo-sector-percent">%</tspan></text><text x="${tx}" y="${ty+22}" text-anchor="middle" class="promo-sector-caption">НА ИГРУ</text>`}).join('');
-    const dots=Array.from({length:36},(_,i)=>{const[x,y]=point(i*10,194);return `<circle cx="${x}" cy="${y}" r="2.4" fill="${i%3===0?'#ffb8be':'#7d91af'}"/>`}).join('');
-    return `<div class="promo-wheel-stage"><div class="promo-wheel-orbit" aria-hidden="true"></div><div class="wheel-wrap"><span class="promo-pointer" aria-hidden="true"></span><div class="wheel" id="promo-wheel"><svg class="promo-wheel-svg" viewBox="0 0 400 400" aria-hidden="true"><defs>${gradients}<linearGradient id="wheel-rim" x2="1" y2="1"><stop stop-color="#7587a5"/><stop offset=".35" stop-color="#23324c"/><stop offset=".65" stop-color="#0b1424"/><stop offset="1" stop-color="#4b607f"/></linearGradient></defs><circle cx="200" cy="200" r="199" fill="url(#wheel-rim)"/><circle cx="200" cy="200" r="185" fill="#09101d"/>${sectors}${dots}<circle cx="200" cy="200" r="183" fill="none" stroke="#ffffff45" stroke-width="1"/></svg></div><div class="promo-wheel-hub" aria-hidden="true"><span>ЗА ГРАНЬЮ</span><small>ТВОЯ УДАЧА</small></div></div><div class="promo-wheel-caption"><span></span> Крути колесо — забирай скидку <span></span></div></div>`;
+    const colors=rules.prizes.map((prize,index)=>prize===Math.max(...rules.prizes)?['#43e8ff','#0762e9']:index%2?['#288dff','#154dc6']:['#ff5869','#d91e43']);
+    const gradients=colors.map(([light,dark],index)=>`<linearGradient id="sector-${index}" x1="0" y1="0" x2=".7" y2="1"><stop stop-color="${light}"/><stop offset="1" stop-color="${dark}"/></linearGradient>`).join('');
+    const sectors=rules.prizes.map((prize,index)=>{
+      const [x1,y1]=point(index*60,174),[x2,y2]=point((index+1)*60,174),[tx,ty]=point(index*60+30,125);
+      return `<g class="promo-sector" data-sector="${index}"><path d="M200 200L${x1} ${y1}A174 174 0 0 1 ${x2} ${y2}Z" fill="url(#sector-${index})" stroke="#0b1020" stroke-width="4"/><g transform="rotate(${index*60+30},${tx},${ty})"><text x="${tx}" y="${ty+6}" text-anchor="middle" class="promo-sector-value">−${prize}<tspan class="promo-sector-percent">%</tspan></text><text x="${tx}" y="${ty+25}" text-anchor="middle" class="promo-sector-caption">${prize===Math.max(...rules.prizes)?'СУПЕРБОНУС':'НА ТВОЮ ИГРУ'}</text></g></g>`;
+    }).join('');
+    const lights=Array.from({length:36},(_,index)=>{const[x,y]=point(index*10,189);return `<circle cx="${x}" cy="${y}" r="${index%3===0?3.2:1.8}" fill="${index%3===0?'#f4fbff':index%2?'#39b4ff':'#ff6478'}"/>`}).join('');
+    const prizes=[...new Set(rules.prizes)].sort((a,b)=>a-b);
+    return `<div class="promo-wheel-stage"><div class="promo-wheel-orbit" aria-hidden="true"></div><div class="wheel-wrap"><span class="promo-pointer" aria-hidden="true"></span><div class="wheel" id="promo-wheel"><svg class="promo-wheel-svg" viewBox="0 0 400 400" aria-hidden="true"><defs>${gradients}</defs><circle cx="200" cy="200" r="198" fill="#0b1222" stroke="#2999ff" stroke-width="2"/><circle cx="200" cy="200" r="180" fill="#131b2a" stroke="#e6f7ff" stroke-width="1.5"/>${sectors}${lights}</svg></div><div class="promo-wheel-hub" aria-hidden="true">${icon('headset','trial')}<small>ТВОЙ БОНУС</small></div></div><div class="promo-prize-strip">${prizes.map(prize=>`<span>−${prize}%</span>`).join('')}</div><p class="promo-wheel-caption">Твоя следующая игра — с бонусом</p></div>`;
   }
   function draw() {
     const preview=rules.mode==='preview';
@@ -88,13 +92,16 @@
       bookingOffer={promo:result,name:data.name,phone:data.phone};
       if(!form.isConnected)return;
       const wheel=$('#promo-wheel');
+      form.closest('.promo-modal')?.classList.add('is-spinning');
       wheel.style.transform=`rotate(${2160+360-(result.sector*60+30)}deg)`;
       button.textContent=result.repeated?'Показываем твой бонус…':'Колесо выбирает скидку…';
       const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
       if(!reduced)await new Promise(resolve=>setTimeout(resolve,3600));
       if(!form.isConnected)return;
+      form.closest('.promo-modal')?.classList.remove('is-spinning');
+      wheel.querySelector('[data-sector="'+result.sector+'"]')?.classList.add('is-winning');
       form.hidden=true;$('#promo-result').innerHTML=resultMarkup(result);
-    } catch(failure) {if(form.isConnected){error.textContent=failure.message;button.disabled=false;button.textContent=rules.mode==='preview'?'Прокрутить для примера':'Крутить колесо';}}
+    } catch(failure) {if(form.isConnected){form.closest('.promo-modal')?.classList.remove('is-spinning');error.textContent=failure.message;button.disabled=false;button.textContent=rules.mode==='preview'?'Прокрутить для примера':'Крутить колесо';}}
   });
   document.addEventListener('click', event => {
     if(event.target.closest('[data-promo-book]') && rules?.mode==='live' && bookingOffer) window.ZGBooking?.open(bookingOffer);

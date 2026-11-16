@@ -1,0 +1,16 @@
+{
+  "mode": "built-in image_gen",
+  "purpose": "Two contrasting non-metallic icon samples",
+  "icons": [
+    {
+      "name": "headset",
+      "asset": "dist/assets/icons/headset-trial.webp",
+      "prompt": "Use case: stylized-concept. Create ONE clean premium raster UI pictogram for a black esports VR website. Smooth exact contours and strong readable silhouette. Flat modern graphic design, solid electric BLUE (#168BFF), vivid RED (#FF303D), and bright WHITE. White perimeter accents keep the shape visible against black. Two-dimensional, no metal, no chrome, no bevels, no 3D lighting, no hairline details, no blur, NO GLOW, absolutely NO grain, NO splatter, NO dust, NO particles, NO rough texture, NO disconnected pixels outside the icon. NO fuzzy white fringe. Background must be entirely truly transparent outside the clean object contour. Centered with generous empty transparent padding on all sides, whole icon visible, square composition. No words, no letters, no borders or enclosing badge. Polished friendly technology brand style, not a cartoon character. Broad simple clear shapes suitable at 32 pixels.\nSubject: One stylized VR headset: a rounded rectangular electric-blue visor, a thick clean white body around the visor, short red earpiece accents and a single simple white curved top strap. Front-facing, symmetrical. NO human head, NO face, NO hair."
+    },
+    {
+      "name": "users",
+      "asset": "dist/assets/icons/users-trial.webp",
+      "prompt": "Use case: stylized-concept. Create ONE clean premium raster UI pictogram for a black esports VR website. Smooth exact contours and strong readable silhouette. Flat modern graphic design, solid electric BLUE (#168BFF), vivid RED (#FF303D), and bright WHITE. White perimeter accents keep the shape visible against black. Two-dimensional, no metal, no chrome, no bevels, no 3D lighting, no hairline details, no blur, NO GLOW, absolutely NO grain, NO splatter, NO dust, NO particles, NO rough texture, NO disconnected pixels outside the icon. NO fuzzy white fringe. Background must be entirely truly transparent outside the clean object contour. Centered with generous empty transparent padding on all sides, whole icon visible, square composition. No words, no letters, no borders or enclosing badge. Polished friendly technology brand style, not a cartoon character. Broad simple clear shapes suitable at 32 pixels.\nSubject: A simple GROUP pictogram consisting of THREE ROUND HEADS above THREE SHOULDER BUSTS. A large central white circle and white central shoulder shape, flanked by a blue teammate on the left and a red teammate on the right. Minimal rounded connected geometry. Absolutely NO faces, NO hair, NO goggles, NO VR headsets, NO shirts, NO detailed human characters. Only abstract head-and-shoulders symbols."
+    }
+  ]
+}

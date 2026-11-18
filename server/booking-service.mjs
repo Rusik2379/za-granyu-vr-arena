@@ -3,6 +3,7 @@ import {createHmac} from 'node:crypto';
 import {normalizePhone, PromoError} from './promo-core.mjs';
 import {BookNowError} from './booknow-client.mjs';
 import {bookingQuote} from './booking-price.mjs';
+import bookingRange from '../dist/booking-range.js';
 
 const fail = (status, code, message) => { throw new PromoError(status, code, message); };
 const uuid = value => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value || '');
@@ -129,6 +130,7 @@ export function createBookingService({client, promo, databasePath, secret, now =
     const existing = db.prepare('SELECT * FROM site_bookings WHERE request_id=?').get(input.requestId);
     if (existing) return previous(existing, ownerHash);
     if (input.consent !== true || input.website) fail(400, 'CONSENT', 'Подтвердите согласие на обработку записи');
+    if (input.terms !== true) fail(400, 'TERMS', 'Подтвердите пользовательское соглашение перед бронированием');
     const phone = normalizePhone(input.phone);
     const name = String(input.name || '').trim();
     const message = String(input.message || '').trim();
@@ -145,8 +147,11 @@ export function createBookingService({client, promo, databasePath, secret, now =
     const available = await slots(input);
     const slot = available.slots.find(item => item.start === input.time);
     if (!slot) fail(409, 'SLOT', 'Это время уже недоступно. Выберите другой сеанс');
+    const slotsCount = Number(input.slotsCount ?? 1);
+    const interval = bookingRange.rangeFor(available.slots, input.time, slotsCount);
+    if (!interval) fail(409, 'RANGE', 'Выбранные часы нельзя объединить. Обновите расписание и выберите соседние свободные сеансы');
     const quantity = Number(input.quantity || 1);
-    if (!Number.isInteger(quantity) || quantity < 1 || quantity > Math.min(10, slot.quantity) || (!service.collective && quantity !== 1)) {
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > Math.min(10, interval.quantity) || (!service.collective && quantity !== 1)) {
       fail(400, 'QUANTITY', 'Проверьте количество мест');
     }
     const reservedOn = slotToUtc(input.date, slot.start, available.timezone);
@@ -154,7 +159,7 @@ export function createBookingService({client, promo, databasePath, secret, now =
     if (input.promoId && !promo) fail(400, 'PROMO_DISABLED', 'Бонусы сейчас недоступны. Оформите запись без скидки');
     const offer = input.promoId ? promo.forBooking({id: input.promoId, phone, clientToken: input.clientToken}) : null;
     if (offer && Date.parse(reservedOn) > Date.parse(offer.expiresAt)) fail(400, 'PROMO_VISIT_DATE', 'Для скидки выберите посещение до окончания срока бонуса');
-    const quote = bookingQuote(slot.priceMinor, quantity, offer?.discountPercent || 0, available.currency);
+    const quote = bookingQuote(interval.priceMinor, quantity, offer?.discountPercent || 0, available.currency);
     const fingerprint = hash([phone, input.locationId, input.serviceId, reservedOn].join('|'));
     // Reserve both the request and the bonus before the network call. Uncertain outcomes stay reserved.
     try {
@@ -165,10 +170,12 @@ export function createBookingService({client, promo, databasePath, secret, now =
         .get(fingerprint, offer?.id || null);
       if (!row) throw error;
       if (row.promo_id && row.fingerprint !== fingerprint) fail(409, 'PROMO_USED', 'Скидка уже привязана к другой записи');
+      if (row.state === 'confirmed' && (JSON.parse(row.result).slotsCount || 1) !== slotsCount) fail(409, 'DUPLICATE', 'На это время уже оформлена запись с другой длительностью. Уточните её у администратора');
       return previous(row, ownerHash);
     }
-    const note = [`Гостей в компании: ${guests}.`, scenario ? 'Пожелание по игре: ' + scenario : '', message,
+    const note = [`Гостей в компании: ${guests}.`, `Выбранный интервал: ${input.date}, ${interval.start}–${interval.end} (${interval.durationMinutes} мин., ${slotsCount} сеанс.).`, scenario ? 'Пожелание по игре: ' + scenario : '', message,
       offer ? `Колесо скидок: ${offer.discountPercent}%. ${quote ? `Стоимость ${quote.baseLabel}, скидка ${quote.discountLabel}, к оплате ${quote.totalLabel}. ` : ''}Бонус ${offer.id}. Действует до ${offer.expiresAt}. Применить скидку вручную и проверить номер при посещении.` : '',
+      'Пользователь принял пользовательское соглашение /terms/ и политику обработки данных /privacy/.',
       `Запись с сайта. Запрос ${input.requestId}.`].filter(Boolean).join('\n');
     let result;
     try {
@@ -176,10 +183,13 @@ export function createBookingService({client, promo, databasePath, secret, now =
         location_uuid: input.locationId, service_uuid: input.serviceId,
         ...(input.stafferId ? {staffer_uuid: input.stafferId} : {}),
         customer_first_name: name, customer_phone: phone, ...(email ? {customer_email: email} : {}),
-        booking_comment: note, booking_callback: input.callback === true, quantity});
+        booking_comment: note, booking_callback: input.callback === true, quantity, slots_count: slotsCount});
       const booking = response.data || response;
       if (!booking.uuid) throw new Error('Missing booking UUID');
+      const expectedEnd = slotToUtc(input.date, interval.end, available.timezone);
+      if (slotsCount > 1 && booking.end_time && Date.parse(booking.end_time) !== Date.parse(expectedEnd)) throw new Error('BookNow returned a different booking interval');
       result = {id: booking.uuid, requestId: input.requestId, start: booking.start_time || reservedOn,
+        end: booking.end_time || expectedEnd, slotsCount, durationMinutes:interval.durationMinutes, quantity,
         timezone: available.timezone, status: booking.status?.name || '', service: service.name,
         discountPercent: offer?.discountPercent || 0, promoId: offer?.id || null, quote,
         discountApplication: offer ? 'administrator' : null, priceLabel: booking.order?.total_formatted || slot.priceLabel};

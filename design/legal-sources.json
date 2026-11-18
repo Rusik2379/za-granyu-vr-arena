@@ -1,0 +1,18 @@
+[
+  {
+    "kind": "terms",
+    "sourceName": "Пользовательское соглашение.docx",
+    "sha256": "ce266084d7fee24310854bc446bfd433513c6e8bd1d91b8f375cf91a00fa6568",
+    "paragraphs": 23,
+    "page": "/terms/",
+    "download": "/documents/user-agreement.docx"
+  },
+  {
+    "kind": "privacy",
+    "sourceName": "Политика в отношении обработки персональных данных.docx",
+    "sha256": "c4cde27fc8dcecd7cffb7bb5b9b7df9a2c4b54ca12009ee1db9d038296ba7e6d",
+    "paragraphs": 106,
+    "page": "/privacy/",
+    "download": "/documents/personal-data-policy.docx"
+  }
+]

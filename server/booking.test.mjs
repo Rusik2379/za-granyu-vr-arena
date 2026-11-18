@@ -9,10 +9,65 @@ import {createBookingService, slotToUtc} from './booking-service.mjs';
 import {BookNowError} from './booknow-client.mjs';
 import {createSiteServer} from './site-server.mjs';
 import {bookingQuote} from './booking-price.mjs';
+import ranges from '../dist/booking-range.js';
 
 const locationId = '11111111-1111-4111-8111-111111111111';
 const serviceId = '22222222-2222-4222-8222-222222222222';
 const clientToken = 'a'.repeat(64);
+
+const intervalSlots = () => [12,13,14].map((hour,index) => ({start:hour+':00',end:(hour+1)+':00',quantity:index===1?2:5,price:90000+index*10000,price_formatted:'900 ₽'}));
+function withIntervals(f, response = null) {
+  const original = f.client.request;
+  f.client.request = async (path,body) => {
+    if(path.includes('/time-slots?')) return {timezone:'Asia/Barnaul',currency:'RUB',dates:[{date:'2026-11-11',slots:intervalSlots()}]};
+    if(response && path==='/bookings'){f.calls.push(body);return response(body);}
+    return original(path,body);
+  };
+}
+
+test('adjacent choices extend and trim one interval without filling a distant gap', () => {
+  const slots=intervalSlots().map(slot=>({...slot,priceMinor:slot.price}));
+  let chosen=ranges.choose(slots,null,'12:00');
+  chosen=ranges.choose(slots,chosen,'13:00');
+  chosen=ranges.choose(slots,chosen,'14:00');
+  assert.deepEqual([chosen.start,chosen.end,chosen.slotsCount,chosen.durationMinutes],['12:00','15:00',3,180]);
+  chosen=ranges.choose(slots,chosen,'14:00');assert.equal(chosen.end,'14:00');
+  chosen=ranges.choose(slots,chosen,'12:00');assert.equal(chosen.start,'13:00');
+  assert.equal(ranges.choose(slots,chosen,'13:00'),null);
+  assert.equal(ranges.rangeFor(slots.filter(slot=>slot.start!=='13:00'),'12:00',3),null);
+});
+
+test('multiple adjacent hours create one native BookNow booking with the total verified quote', async t => {
+  const f=setup(t);withIntervals(f);
+  const offer=f.claim(), input={...f.input(),slotsCount:3,quantity:2,promoId:offer.id};
+  // This fixture is a collective service for the seat-capacity check.
+  const list=f.client.list;f.client.list=async path=>(await list(path)).map(row=>path.includes('/services')?{...row,is_collective:true}:row);
+  const result=await f.bookings.book(input);
+  assert.equal(f.calls.length,1);assert.equal(f.calls[0].slots_count,3);assert.equal(f.calls[0].quantity,2);
+  assert.equal(result.end,'2026-11-11T08:00:00Z');assert.equal(result.durationMinutes,180);
+  assert.deepEqual([result.quote.baseMinor,result.quote.totalMinor],[600000,558000]);
+  assert.match(f.calls[0].booking_comment,/12:00–15:00/);
+  await assert.rejects(f.bookings.book({...input,requestId:randomUUID(),slotsCount:1}),{code:'DUPLICATE'});
+  assert.equal(f.calls.length,1);
+});
+
+test('invalid ranges, a busy intervening hour, insufficient seats and missing agreement never create bookings', async t => {
+  const f=setup(t);withIntervals(f);
+  for(const slotsCount of [0,13,1.5]) await assert.rejects(f.bookings.book({...f.input(),slotsCount}),{code:'RANGE'});
+  await assert.rejects(f.bookings.book({...f.input(),slotsCount:3,quantity:3}),{code:'QUANTITY'});
+  await assert.rejects(f.bookings.book({...f.input(),terms:false}),{code:'TERMS'});
+  const original=f.client.request;f.client.request=async(path,body)=>{const r=await original(path,body);if(path.includes('/time-slots?'))r.dates[0].slots=r.dates[0].slots.filter(slot=>slot.start!=='13:00');return r;};
+  await assert.rejects(f.bookings.book({...f.input(),slotsCount:3}),{code:'RANGE'});
+  assert.equal(f.calls.length,0);
+});
+
+test('a provider response with a shortened multi-hour reservation remains uncertain and cannot be duplicated', async t => {
+  const f=setup(t);withIntervals(f,body=>({uuid:randomUUID(),end_time:'2026-11-11T06:00:00Z'}));
+  const input={...f.input(),slotsCount:2};
+  await assert.rejects(f.bookings.book(input),{code:'UNCERTAIN'});
+  await assert.rejects(f.bookings.book(input),{code:'UNCERTAIN'});
+  assert.equal(f.calls.length,1);
+});
 
 function setup(t) {
   const directory = mkdtempSync(join(tmpdir(), 'zg-booking-'));
@@ -40,8 +95,8 @@ function setup(t) {
   };
   const bookings = createBookingService({client, promo, databasePath, secret, now});
   const input = () => ({requestId: randomUUID(), clientToken, locationId, serviceId, date: '2026-11-11', time: '12:00',
-    name: 'Тест', phone: '+79990000001', consent: true, message: 'Только тестовые данные', quantity: 1});
-  const claim = () => promo.claim({name: 'Тест', phone: '+79990000001', consent: true, clientToken}, 'test');
+    name: 'Тест', phone: '+79990000001', consent: true, terms: true, message: 'Только тестовые данные', quantity: 1});
+  const claim = () => promo.claim({name: 'Тест', phone: '+79990000001', consent: true, terms: true, clientToken}, 'test');
   t.after(() => {bookings.close(); promo.close(); rmSync(directory, {recursive: true, force: true});});
   return {bookings, promo, client, calls, input, claim, advance: milliseconds => {time += milliseconds;}};
 }

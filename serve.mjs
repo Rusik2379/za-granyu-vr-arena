@@ -7,7 +7,7 @@ const pages = process.argv.includes('--pages');
 const port = Number(process.env.PORT || (pages ? 4174 : 4175));
 const base = pages ? (process.env.PAGES_BASE || '/za-granyu-vr-arena/') : '/';
 const root = path.resolve(fileURLToPath(new URL(pages ? './docs/' : './dist/', import.meta.url)));
-const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.webp': 'image/webp', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' };
+const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.webp': 'image/webp', '.png': 'image/png', '.svg': 'image/svg+xml', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.woff2': 'font/woff2' };
 
 const server = http.createServer(async (req, res) => {
   try {

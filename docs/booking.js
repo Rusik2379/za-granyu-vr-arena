@@ -5,6 +5,8 @@
   const option = (value, label) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`;
   const localDate = (days = 0) => new Intl.DateTimeFormat('en-CA', {timeZone: 'Asia/Barnaul', year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date(Date.now() + days * 86400000));
   let catalogPromise;
+  const ranges = window.ZGBookingRange;
+  const durationLabel = minutes => minutes % 60 ? minutes + ' мин.' : minutes / 60 + ' ч';
 
   function clientToken() {
     let value = localStorage.getItem('zg-wheel-client-v1');
@@ -45,17 +47,17 @@
         </div>
       </fieldset>
       <fieldset class="booking-fields booking-schedule-fields"><legend class="form-section-title">02 / Дата и время игры</legend>
-        <input type="hidden" name="date" value="${localDate()}"><input type="hidden" name="time" value="">
+        <input type="hidden" name="date" value="${localDate()}"><input type="hidden" name="time" value=""><input type="hidden" name="slotsCount" value="1">
         <div class="booking-schedule">
-          <div class="booking-month-panel"><div class="booking-month-header"><strong data-month-title></strong><div><button type="button" class="booking-month-nav" data-month="-1" aria-label="Предыдущий месяц">${icon('left')}</button><button type="button" class="booking-month-nav" data-month="1" aria-label="Следующий месяц">${icon('arrow')}</button></div></div>
+          <div class="booking-month-panel"><div class="booking-date-header"><h3>Выбери день</h3><button type="button" class="booking-calendar-toggle" data-calendar-toggle aria-expanded="false">${icon('calendar')} Календарь</button></div><div class="booking-quick-days" data-quick-days role="group" aria-label="Ближайшие даты"></div><div class="booking-full-calendar" data-full-calendar hidden><div class="booking-month-header"><strong data-month-title></strong><div><button type="button" class="booking-month-nav" data-month="-1" aria-label="Предыдущий месяц">${icon('left')}</button><button type="button" class="booking-month-nav" data-month="1" aria-label="Следующий месяц">${icon('arrow')}</button></div></div>
             <div class="booking-weekdays" aria-hidden="true">${['ПН','ВТ','СР','ЧТ','ПТ','СБ','ВС'].map(day=>`<span>${day}</span>`).join('')}</div>
-            <div class="booking-month-grid" data-days role="group" aria-label="Календарь записи"></div>
+            <div class="booking-month-grid" data-days role="group" aria-label="Календарь записи"></div></div>
             <div class="booking-date-legend"><span>Есть сеансы</span><span>Недоступно</span></div>
             <p data-calendar-note class="booking-schedule-note" aria-live="polite">Сначала выбери услугу</p>
           </div>
-          <div class="booking-time-panel"><div class="booking-time-header"><div><h3>Время начала</h3><p data-selected-date></p></div><span class="booking-hour-step">Шаг 1 час</span></div>
+          <div class="booking-time-panel"><div class="booking-time-header"><div><h3>Выбери часы игры</h3><p data-selected-date></p></div><span class="booking-hour-step">Шаг 1 час</span></div>
             <div class="booking-slot-grid" data-slots role="group" aria-label="Свободное время"></div>
-            <p class="booking-schedule-note">Время Барнаула · UTC+7</p><p class="booking-schedule-note" data-time-note aria-live="polite">Выбери услугу, чтобы увидеть свободные сеансы</p>
+            <div class="booking-range-selection"><div><span>Выбранное время</span><strong data-range-label>Нажми на свободный час</strong><small data-range-duration></small></div><button type="button" data-clear-range disabled>Сбросить</button></div><p class="booking-schedule-note">Время Барнаула · UTC+7</p><p class="booking-schedule-note" data-time-note aria-live="polite">Выбери услугу, затем соседние свободные часы</p>
           </div>
         </div>
       </fieldset>
@@ -72,7 +74,7 @@
         <div class="booking-total"><span>${offer ? 'Предварительно со скидкой' : 'Стоимость выбранного сеанса'}</span><div class="booking-total-amount"><del data-before hidden></del><strong data-total>Выберите сеанс</strong></div></div>
         <p class="booking-savings" data-savings hidden aria-live="polite"></p><p class="muted small" data-availability aria-live="polite">Проверяем доступные услуги…</p>
         <label class="consent"><input type="checkbox" name="callback"><span>Перезвоните мне для уточнения деталей</span></label>
-        <label class="consent"><input type="checkbox" name="consent" required><span>Согласен на обработку и передачу имени, телефона, email и пожеланий в BookNow для оформления записи${offer ? ' и использования скидки' : ''}.</span></label>
+        <label class="consent"><input type="checkbox" name="terms" required><span>Принимаю <a href="/za-granyu-vr-arena/terms/" target="_blank" rel="noopener">пользовательское соглашение</a>, включая возрастные ограничения и правила посещения.</span></label><label class="consent"><input type="checkbox" name="consent" required><span>Согласен на обработку и передачу данных в BookNow для оформления записи${offer ? ' и использования скидки' : ''} в соответствии с <a href="/za-granyu-vr-arena/privacy/" target="_blank" rel="noopener">политикой обработки персональных данных</a>.</span></label>
         <p class="promo-error" data-error role="alert"></p><div class="form-actions"><button class="btn" type="submit" disabled>${offer ? 'Записаться со скидкой' : 'Забронировать время'}</button></div>
       </div>
     </form>`;
@@ -89,13 +91,20 @@
     const dateFormat = (date, options) => new Date(date + 'T12:00:00Z').toLocaleDateString('ru-RU', {timeZone: 'Asia/Barnaul', ...options});
     const offsetMonth = (month, amount) => {const date = new Date(month + '-01T12:00:00Z'); date.setUTCMonth(date.getUTCMonth() + amount); return date.toISOString().slice(0, 7);};
     let location, service;
-    let slots = [];
+    let slots = [], selectedRange = null;
     let generation = 0, slotGeneration = 0, calendarGeneration = 0;
     let month = localDate().slice(0, 7), calendarDates = new Map(), calendarLoading = false, slotsLoading = false;
     let requestId = crypto.randomUUID();
     let busy = false, locked = false;
 
     function renderCalendar() {
+      const quickStart = month === localDate().slice(0,7) ? localDate() : month + '-01';
+      element.querySelector('[data-quick-days]').innerHTML = Array.from({length:6},(_,index) => {
+        const day = new Date(Date.parse(quickStart) + index * 86400000).toISOString().slice(0,10);
+        const count = calendarDates.get(day)?.count || 0;
+        const label = day === localDate() ? 'Сегодня' : day === localDate(1) ? 'Завтра' : dateFormat(day,{weekday:'short'});
+        return `<button type="button" class="booking-quick-day" data-date="${day}" aria-pressed="${day === field('date').value}" ${!service || calendarLoading || !count || day > localDate(90) ? 'disabled' : ''} aria-label="${escapeHtml(dateFormat(day,{day:'numeric',month:'long',weekday:'long'}))}: ${count ? 'есть свободное время' : 'недоступно'}"><span>${label}</span><strong>${escapeHtml(dateFormat(day,{day:'numeric',month:'short'}))}</strong><small>${calendarLoading ? '…' : count ? 'Есть время' : 'Нет мест'}</small></button>`;
+      }).join('');
       element.querySelector('[data-month-title]').textContent = dateFormat(month + '-01', {month: 'long', year: 'numeric'});
       element.querySelectorAll('[data-month]').forEach(button => {
         const next = offsetMonth(month, Number(button.dataset.month));
@@ -115,13 +124,18 @@
     }
 
     function renderSlots() {
-      element.querySelector('[data-selected-date]').textContent = dateFormat(field('date').value, {weekday:'short',day:'numeric',month:'long'});
+      element.querySelector('[data-selected-date]').textContent = dateFormat(field('date').value, {weekday:'long',day:'numeric',month:'long'});
       slotsElement.setAttribute('aria-busy', String(slotsLoading));
       const hours = [...new Set([...Array.from({length:12}, (_, index) => String(index + 10).padStart(2,'0') + ':00'), ...slots.map(slot => slot.start)])].sort();
       slotsElement.innerHTML = hours.map(time => {
-        const slot = slots.find(item => item.start === time);
-        return `<button type="button" class="booking-slot" data-slot="${time}" aria-pressed="${time === field('time').value}" ${!slot || slotsLoading ? 'disabled' : ''} aria-label="${time}${slot ? ', до ' + slot.end + (service?.collective ? ', свободных мест: ' + slot.quantity : '') : ', недоступно'}"><strong>${time}</strong><small>${slot ? 'до ' + escapeHtml(slot.end) : 'недоступно'}</small>${slot && service?.collective ? `<span>${slot.quantity} мест</span>` : ''}</button>`;
+        const slot = slots.find(item => item.start === time), at = ranges.minutes(time);
+        const selected = selectedRange && at >= selectedRange.startMinutes && at < selectedRange.endMinutes;
+        const classes = ['booking-slot', selected ? 'is-selected' : '', selected && at === selectedRange.startMinutes ? 'is-range-start' : '', selected && at + 60 === selectedRange.endMinutes ? 'is-range-end' : ''].join(' ');
+        return `<button type="button" class="${classes}" data-slot="${time}" aria-pressed="${!!selected}" ${(!slot && !selected) || slotsLoading ? 'disabled' : ''} aria-label="${time}–${ranges.time(at+60)}${selected ? ', выбрано' : slot ? ', свободно' : ', недоступно'}"><strong>${time}</strong><small>${slot || selected ? 'до ' + ranges.time(at+60) : 'недоступно'}</small>${selected ? icon('check') : ''}</button>`;
       }).join('');
+      element.querySelector('[data-range-label]').textContent = selectedRange ? selectedRange.start + ' — ' + selectedRange.end : 'Нажми на свободный час';
+      element.querySelector('[data-range-duration]').textContent = selectedRange ? 'Длительность ' + durationLabel(selectedRange.durationMinutes) + (selectedRange.slotsCount > 1 ? ' · ' + selectedRange.slotsCount + ' сеанса по ' + durationLabel(selectedRange.unitMinutes) : '') : 'Соседние часы объединятся в один интервал';
+      element.querySelector('[data-clear-range]').disabled = !selectedRange;
     }
 
     async function loadCalendar({chooseAvailable = false} = {}) {
@@ -134,7 +148,7 @@
       note.textContent = 'Проверяем свободные даты…';
       const start = month + '-01' < localDate() ? localDate() : month + '-01';
       const last = new Date(Date.parse(offsetMonth(month, 1) + '-01T12:00:00Z') - 86400000).toISOString().slice(0, 10);
-      const days = Math.round((Date.parse(last) - Date.parse(start)) / 86400000) + 1;
+      const days = Math.max(6,Math.round((Date.parse(last) - Date.parse(start)) / 86400000) + 1);
       try {
         const result = await api('calendar?' + new URLSearchParams({locationId: location.id, serviceId: service.id,
           stafferId: field('stafferId').value, date: start, days: String(days)}));
@@ -153,12 +167,12 @@
     }
 
     function summary() {
-      const slot = slots.find(item => item.start === field('time').value);
+      const slot = selectedRange;
       const total = element.querySelector('[data-total]'), before = element.querySelector('[data-before]'), savings = element.querySelector('[data-savings]');
       before.hidden = true; savings.hidden = true;
       if (!slot) {total.textContent = 'Выберите сеанс'; submit.disabled = true; return;}
       const quantity = Number(field('quantity').value || 1), discount = opts.promo?.discountPercent || 0;
-      if (slot.priceLabel && Number.isSafeInteger(slot.priceMinor)) {
+      if (Number.isSafeInteger(slot.priceMinor)) {
         const format = amount => new Intl.NumberFormat('ru-RU', {style:'currency',currency:'RUB'}).format(amount / 100);
         const base = slot.priceMinor * quantity, reduction = Math.round(base * discount / 100);
         total.textContent = format(base - reduction);
@@ -168,7 +182,7 @@
     }
 
     function updateQuantity() {
-      const slot = slots.find(item => item.start === field('time').value);
+      const slot = selectedRange;
       const count = service?.collective ? Math.min(10, slot?.quantity || 1) : 1;
       const previous = Number(field('quantity').value || 1);
       field('quantity').innerHTML = Array.from({length:count}, (_, index) => option(String(index + 1), String(index + 1))).join('');
@@ -179,10 +193,10 @@
 
     async function loadSlots() {
       const version = ++slotGeneration;
-      slots = []; field('time').value = ''; slotsLoading = !!service;
+      slots = []; selectedRange = null; field('time').value = ''; field('slotsCount').value = '1'; slotsLoading = !!service;
       renderSlots(); summary();
       const note = element.querySelector('[data-time-note]');
-      if (!service || !field('date').value || (!service.autoAllocate && !field('stafferId').value)) {slotsLoading = false; note.textContent = 'Выбери услугу, чтобы увидеть свободные сеансы'; return;}
+      if (!service || !field('date').value || (!service.autoAllocate && !field('stafferId').value)) {slotsLoading = false; note.textContent = 'Выбери услугу, затем соседние свободные часы'; return;}
       note.textContent = 'Загружаем свободное время…'; availability.textContent = 'Проверяем расписание BookNow…';
       try {
         const result = await api('slots?' + new URLSearchParams({locationId:location.id,serviceId:service.id,stafferId:field('stafferId').value,date:field('date').value}));
@@ -190,7 +204,7 @@
         slots = result.slots.filter(slot => /^(?:[01]\d|2[0-3]):00$/.test(slot.start));
         calendarDates.set(field('date').value, {date:field('date').value,count:slots.length});
         renderCalendar();
-        note.textContent = slots.length ? 'Нажми на свободное время' : 'На эту дату нет свободных сеансов. Выбери другую дату';
+        note.textContent = slots.length ? (service.duration > 60 ? 'Один сеанс этого тарифа — ' + durationLabel(service.duration) + '. Он выделится целиком; соседние сеансы можно объединить.' : 'Нажимай на соседние часы, чтобы продлить игру. Повторное нажатие сокращает интервал.') : 'На эту дату нет свободных сеансов. Выбери другую дату';
         availability.textContent = slots.length ? 'Свободное время подтверждено BookNow · начало каждый час' : 'Выберите другую дату или услугу';
       } catch (failure) {
         if (version === slotGeneration && element.isConnected) {note.textContent = failure.message; availability.textContent = 'Не удалось обновить расписание. Выбери дату ещё раз';}
@@ -203,13 +217,13 @@
       const version = ++generation;
       ++calendarGeneration; ++slotGeneration;
       service = location?.services.find(item => item.id === field('serviceId').value);
-      slots = []; calendarDates = new Map(); calendarLoading = false; slotsLoading = false;
+      slots = []; selectedRange = null; field('slotsCount').value = '1'; calendarDates = new Map(); calendarLoading = false; slotsLoading = false;
       field('time').value = ''; field('stafferId').innerHTML = ''; field('stafferId').disabled = true;
       element.querySelector('[data-staffer]').hidden = !service || service.autoAllocate;
       element.querySelector('[data-service-note]').textContent = service ? `${service.duration ? service.duration + ' минут. ' : ''}${service.collective ? 'Количество мест определяет число бронируемых мест.' : 'Оформляется один сеанс выбранной услуги.'} Число гостей передадим администратору.` : '';
       month = field('date').value.slice(0,7);
       renderCalendar(); renderSlots(); updateQuantity();
-      if (!service) {element.querySelector('[data-calendar-note]').textContent = 'Сначала выбери услугу'; element.querySelector('[data-time-note]').textContent = 'Выбери услугу, чтобы увидеть свободные сеансы'; return;}
+      if (!service) {element.querySelector('[data-calendar-note]').textContent = 'Сначала выбери услугу'; element.querySelector('[data-time-note]').textContent = 'Выбери услугу, затем соседние свободные часы'; return;}
       try {
         if (!service.autoAllocate) {
           const result = await api('staffers?' + new URLSearchParams({locationId:location.id,serviceId:service.id}));
@@ -235,22 +249,39 @@
       error.textContent = '';
       switch(event.target.name) {
         case 'serviceId': void loadService(); break;
-        case 'stafferId': {const version = ++generation; ++slotGeneration; slots = []; field('time').value = ''; renderSlots(); summary(); void (async () => {await loadCalendar({chooseAvailable:true}); if (version === generation && element.isConnected) await loadSlots();})(); break;}
+        case 'stafferId': {const version = ++generation; ++slotGeneration; slots = []; selectedRange = null; field('slotsCount').value = '1'; field('time').value = ''; renderSlots(); summary(); void (async () => {await loadCalendar({chooseAvailable:true}); if (version === generation && element.isConnected) await loadSlots();})(); break;}
         case 'quantity': summary(); break;
       }
     });
     element.addEventListener('click', event => {
-      const button = event.target.closest('[data-date],[data-slot],[data-month]');
+      const button = event.target.closest('[data-date],[data-slot],[data-month],[data-calendar-toggle],[data-clear-range]');
       if (!button || button.disabled || busy || locked) return;
       error.textContent = '';
-      if (button.hasAttribute('data-month')) {month = offsetMonth(month,Number(button.dataset.month)); void loadCalendar();}
-      else if (button.hasAttribute('data-date')) {field('date').value = button.dataset.date; renderCalendar(); void loadSlots();}
-      else {field('time').value = button.dataset.slot; renderSlots(); updateQuantity();}
+      if (button.hasAttribute('data-calendar-toggle')) {
+        const calendar = element.querySelector('[data-full-calendar]');
+        calendar.hidden = !calendar.hidden; button.setAttribute('aria-expanded',String(!calendar.hidden));
+      } else if (button.hasAttribute('data-month')) {
+        const version = ++generation;
+        month = offsetMonth(month,Number(button.dataset.month)); field('date').value = month + '-01';
+        selectedRange = null; slots = []; field('time').value = ''; renderSlots(); summary();
+        void (async()=>{await loadCalendar({chooseAvailable:true}); if(version===generation&&element.isConnected)await loadSlots();})();
+      } else if (button.hasAttribute('data-date')) {
+        const changedMonth = month !== button.dataset.date.slice(0,7);
+        field('date').value = button.dataset.date; month = button.dataset.date.slice(0,7); renderCalendar();
+        if(changedMonth)void loadCalendar();
+        void loadSlots();
+      } else {
+        const focused = document.activeElement === button, time = button.dataset.slot;
+        selectedRange = button.hasAttribute('data-clear-range') ? null : ranges.choose(slots,selectedRange,time);
+        field('time').value = selectedRange?.start || ''; field('slotsCount').value = String(selectedRange?.slotsCount || 1);
+        renderSlots(); updateQuantity();
+        if(focused&&time)element.querySelector('[data-slot="'+time+'"]:not(:disabled)')?.focus({preventScroll:true});
+      }
     });
     element.addEventListener('submit', async event => {
       event.preventDefault();
       if (busy || locked || !element.reportValidity()) return;
-      if (!slots.some(slot => slot.start === field('time').value)) {error.textContent = 'Выберите свободное время в календаре'; return;}
+      if (!ranges.rangeFor(slots,field('time').value,Number(field('slotsCount').value))) {error.textContent = 'Выберите свободное время в календаре'; return;}
       busy = true;
       submit.disabled = true;
       const buttonText = submit.textContent;
@@ -261,12 +292,12 @@
       controls.forEach(control => {control.disabled = true;});
       try {
         const result = await api('create', {...data, requestId, clientToken: clientToken(),
-          consent: true, callback: field('callback').checked, quantity: Number(data.quantity || 1), promoId: opts.promo?.id || null});
+          consent: true, callback: field('callback').checked, quantity: Number(data.quantity || 1), slotsCount:Number(data.slotsCount || 1), terms:data.terms === 'on', promoId: opts.promo?.id || null});
         if (!element.isConnected) return;
         element.innerHTML = `<div class="success"><div class="success-icon">${icon('check')}</div>
           <h3>Запись оформлена в BookNow</h3><p>${escapeHtml(result.service)}</p>
           <p>${escapeHtml(new Date(result.start).toLocaleString('ru-RU', {timeZone: result.timezone, dateStyle: 'long', timeStyle: 'short'}))}</p>
-          <p>${escapeHtml(result.status)}</p><span class="reference">${escapeHtml(result.id)}</span>
+          ${result.end ? `<p>До ${escapeHtml(new Date(result.end).toLocaleTimeString('ru-RU',{timeZone:result.timezone,hour:'2-digit',minute:'2-digit'}))} · ${escapeHtml(durationLabel(result.durationMinutes))}</p>` : ''}<p>${escapeHtml(result.status)}</p><span class="reference">${escapeHtml(result.id)}</span>
           ${result.discountPercent ? `<div class="booking-success-discount"><strong>Скидка ${escapeHtml(result.discountPercent)}% закреплена за бронью</strong>
             ${result.quote ? `<p>Предварительно к оплате <b>${escapeHtml(result.quote.totalLabel)}</b> вместо ${escapeHtml(result.quote.baseLabel)}</p>` : ''}
             <p>Бонус и расчёт переданы администратору. Он применит скидку к сумме заказа в BookNow.</p></div>` : ''}</div>`;
@@ -304,13 +335,6 @@
     modal(`<div class="eyebrow">Онлайн-запись</div><h2 id="modal-title">${opts.promo ? 'ЗАПИСАТЬСЯ СО СКИДКОЙ' : 'ТВОЯ СЛЕДУЮЩАЯ ИГРА'}</h2>
       <p class="modal-intro">Выбери услугу и свободный сеанс.${opts.duration ? ' Выбранный на сайте формат — ' + escapeHtml(opts.duration) + ' мин. Найди соответствующую услугу ниже.' : ''}</p>${form(opts)}`, 'booking-modal');
   }
-  function privacy() {
-    modal(`<div class="eyebrow">Онлайн-запись</div><h2 id="modal-title">ОБРАБОТКА ДАННЫХ ЗАПИСИ</h2><div class="article-modal">
-      <p>Форма записи передаёт имя, телефон, email и пожелания на сервер сайта и в BookNow для оформления посещения.</p>
-      <p>После колеса сервер сохраняет имя, телефон, процент скидки и срок действия. При бронировании бонус связывается с записью и передаётся в её примечании. Администратор проверяет номер и применяет скидку в CRM.</p>
-      <p>В браузере сохраняется случайный идентификатор для защиты от повторного участия. Серверная база с результатами колеса и подтверждениями записи размещается отдельно от файлов сайта.</p>
-      <p>Другие демонстрационные формы сайта сохраняют тестовые данные только в текущем браузере.</p>
-      <button class="btn btn-outline" data-action="close">Понятно</button></div>`);
-  }
+  function privacy() {document.querySelector('[data-privacy-link]')?.click();}
   window.ZGBooking = Object.freeze({enabled: settings.enabled === true, form, open, privacy});
 })();

@@ -10,7 +10,7 @@ import {createBookingService} from './booking-service.mjs';
 const root = fileURLToPath(new URL('../dist/', import.meta.url));
 const mime = {'.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp',
-  '.woff2': 'font/woff2', '.mp4': 'video/mp4'};
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.woff2': 'font/woff2', '.mp4': 'video/mp4'};
 
 export function createSiteServer({client, databasePath, secret, origins = [], siteDirectory = root,
   promoEnabled = false, prizes = [5, 7, 10, 5, 7, 5], validityDays = 14} = {}) {

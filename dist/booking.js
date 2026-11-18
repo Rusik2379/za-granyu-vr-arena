@@ -134,7 +134,7 @@
         return `<button type="button" class="${classes}" data-slot="${time}" aria-pressed="${!!selected}" ${(!slot && !selected) || slotsLoading ? 'disabled' : ''} aria-label="${time}–${ranges.time(at+60)}${selected ? ', выбрано' : slot ? ', свободно' : ', недоступно'}"><strong>${time}</strong><small>${slot || selected ? 'до ' + ranges.time(at+60) : 'недоступно'}</small>${selected ? icon('check') : ''}</button>`;
       }).join('');
       element.querySelector('[data-range-label]').textContent = selectedRange ? selectedRange.start + ' — ' + selectedRange.end : 'Нажми на свободный час';
-      element.querySelector('[data-range-duration]').textContent = selectedRange ? 'Длительность ' + durationLabel(selectedRange.durationMinutes) + (selectedRange.slotsCount > 1 ? ' · ' + selectedRange.slotsCount + ' сеанса по ' + durationLabel(selectedRange.unitMinutes) : '') : 'Соседние часы объединятся в один интервал';
+      element.querySelector('[data-range-duration]').textContent = selectedRange ? 'Длительность ' + durationLabel(selectedRange.durationMinutes) + (selectedRange.slotsCount > 1 ? ' · ' + selectedRange.slotsCount + ' × ' + durationLabel(selectedRange.unitMinutes) : '') : 'Соседние часы объединятся в один интервал';
       element.querySelector('[data-clear-range]').disabled = !selectedRange;
     }
 
@@ -220,7 +220,7 @@
       slots = []; selectedRange = null; field('slotsCount').value = '1'; calendarDates = new Map(); calendarLoading = false; slotsLoading = false;
       field('time').value = ''; field('stafferId').innerHTML = ''; field('stafferId').disabled = true;
       element.querySelector('[data-staffer]').hidden = !service || service.autoAllocate;
-      element.querySelector('[data-service-note]').textContent = service ? `${service.duration ? service.duration + ' минут. ' : ''}${service.collective ? 'Количество мест определяет число бронируемых мест.' : 'Оформляется один сеанс выбранной услуги.'} Число гостей передадим администратору.` : '';
+      element.querySelector('[data-service-note]').textContent = service ? `${service.duration ? service.duration + ' минут. ' : ''}${service.collective ? 'Количество мест определяет число бронируемых мест.' : 'Бронируется выбранный интервал.'} Число гостей передадим администратору.` : '';
       month = field('date').value.slice(0,7);
       renderCalendar(); renderSlots(); updateQuantity();
       if (!service) {element.querySelector('[data-calendar-note]').textContent = 'Сначала выбери услугу'; element.querySelector('[data-time-note]').textContent = 'Выбери услугу, затем соседние свободные часы'; return;}

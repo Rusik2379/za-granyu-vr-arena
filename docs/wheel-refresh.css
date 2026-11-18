@@ -17,7 +17,7 @@
 .promo-pointer{top:-7px;width:29px;height:37px;background:#f6fbff;filter:drop-shadow(0 0 8px #3ec5ff99);clip-path:polygon(10% 0,90% 0,100% 20%,50% 100%,0 20%)}
 .promo-wheel-hub{width:25%;border:3px solid #c9efff;background:#0a1220;box-shadow:0 0 20px #008cff55,0 4px 15px #0008;gap:6px}
 .promo-wheel-hub:before{inset:-8px;border:1px solid #28aaff70}
-.promo-wheel-hub .site-icon{width:60%;height:auto;aspect-ratio:1;object-fit:contain}
+.promo-wheel-hub .site-icon{width:49%;height:auto;aspect-ratio:1;color:#bceaff;stroke-width:1.5}
 .promo-wheel-hub small{font:800 7px var(--font);letter-spacing:1.4px;color:#b9e8ff}
 .promo-prize-strip{display:flex;justify-content:center;gap:9px;margin-top:24px}
 .promo-prize-strip>span{font:17px var(--display);color:#fff;padding:8px 16px;border:1px solid #2f4e73;background:#101d31;border-radius:4px}

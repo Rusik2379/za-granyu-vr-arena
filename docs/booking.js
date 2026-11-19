@@ -41,7 +41,7 @@
         <div class="form-grid">
           <label class="field full" data-location><span>Локация</span><select name="locationId" required disabled>${option('', 'Загружаем BookNow…')}</select></label>
           <label class="field"><span>Формат игры</span><select name="serviceId" required disabled>${option('', 'Сначала выберите локацию')}</select></label>
-          <label class="field full" data-staffer><span>Инструктор / арена</span><select name="stafferId" disabled></select></label>
+          <label class="field full" data-staffer hidden><span>Инструктор / арена</span><select name="stafferId" disabled></select></label>
           <label class="field" data-quantity hidden><span>Количество мест</span><select name="quantity">${option('1', '1')}</select></label>
           <label class="field"><span>Гостей в компании</span><select name="guests">${Array.from({length: 10}, (_, index) => option(String(index + 1), String(index + 1))).join('')}</select></label>
           <p class="muted small full" data-service-note></p>
@@ -209,9 +209,9 @@
       const version = ++generation;
       ++calendarGeneration; ++slotGeneration;
       service = location?.services.find(item => item.id === field('serviceId').value);
-      slots = []; selectedRange = null; field('slotsCount').value = '1'; calendarDates = new Map(); calendarLoading = false; slotsLoading = false;
+      slots = []; selectedRange = null; field('slotsCount').value = '1'; calendarDates = new Map(); calendarLoading = !!service; slotsLoading = false;
       field('time').value = ''; field('stafferId').innerHTML = ''; field('stafferId').disabled = true;
-      element.querySelector('[data-staffer]').hidden = !service || service.autoAllocate;
+      element.querySelector('[data-staffer]').hidden = true;
       element.querySelector('[data-service-note]').textContent = service ? `${service.duration ? service.duration + ' минут. ' : ''}${service.collective ? 'Количество мест определяет число бронируемых мест.' : 'Бронируется выбранный интервал.'} Игру выберешь на арене — инструктор поможет.` : '';
       weekStart = field('date').value;
       renderCalendar(); renderSlots(); updateQuantity();
@@ -221,12 +221,19 @@
           const result = await api('staffers?' + new URLSearchParams({locationId:location.id,serviceId:service.id}));
           if (version !== generation || !element.isConnected) return;
           field('stafferId').innerHTML = result.staffers.map(item => option(item.id,item.name)).join('');
-          field('stafferId').disabled = false;
-          element.querySelector('[data-staffer]').hidden = result.staffers.length === 1;
+          field('stafferId').disabled = !result.staffers.length;
+          element.querySelector('[data-staffer]').hidden = result.staffers.length <= 1;
+          if (!result.staffers.length) {
+            calendarLoading = false;
+            renderCalendar();
+            availability.textContent = 'Для этого формата пока нет доступных инструкторов. Выбери другой формат';
+            element.querySelector('[data-calendar-note]').textContent = availability.textContent;
+            return;
+          }
         }
         await loadCalendar({chooseAvailable:true});
         if (version === generation && element.isConnected) await loadSlots();
-      } catch (failure) {if (version === generation && element.isConnected) availability.textContent = failure.message;}
+      } catch (failure) {if (version === generation && element.isConnected) {calendarLoading = false; renderCalendar(); availability.textContent = failure.message;}}
     }
 
     function loadLocation(locations) {

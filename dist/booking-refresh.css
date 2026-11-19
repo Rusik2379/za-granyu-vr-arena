@@ -112,3 +112,9 @@ body.booking-in-view .promo-tab,body:has(.booking-modal) .promo-tab{visibility:h
 .booking-panel:has(.booknow-form){padding:26px}
 @media(max-width:540px){.booking-section{padding-block:40px}.booking-panel:has(.booknow-form){padding:19px 12px}.booking-section #booking-title{font-size:26px}}
 @media(max-width:540px){.booknow-form .booking-format-fields .form-grid{grid-template-columns:1fr}.booknow-form .booking-quick-day>small{display:none}.booknow-form .booking-quick-day{min-height:66px}}
+
+.booknow-form .booking-schedule,.booknow-form .booking-slot-grid{transition:opacity .2s ease}
+.booknow-form .booking-schedule:has([aria-busy=true]){opacity:.6}
+.booknow-form .booking-quick-day,.booknow-form .booking-week-nav{transition:background-color .18s ease,border-color .18s ease,color .18s ease,opacity .18s ease}
+.booknow-form [data-calendar-note],.booknow-form [data-time-note]{min-height:1.7em}
+@media(prefers-reduced-motion:reduce){.booknow-form .booking-schedule,.booknow-form .booking-slot-grid,.booknow-form .booking-quick-day,.booknow-form .booking-week-nav{transition:none}}

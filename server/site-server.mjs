@@ -28,6 +28,7 @@ export function createSiteServer({client, databasePath, secret, origins = [], si
     const json = (status, data) => res.writeHead(status, {'Content-Type': 'application/json; charset=utf-8',
       'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff'}).end(JSON.stringify(data));
     try {
+      if (url.pathname === '/admin' || url.pathname.startsWith('/admin/')) return json(404, {message: 'Страница не найдена'});
       if (url.pathname === '/booknow-config.js' || url.pathname === '/promo-config.js') {
         const config = url.pathname === '/booknow-config.js'
           ? `window.ZG_BOOKING_CONFIG=Object.freeze(${JSON.stringify({enabled: !!bookings, apiBase: '/api/booking'})});`

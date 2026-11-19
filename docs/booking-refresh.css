@@ -11,7 +11,7 @@
 .booknow-form .form-section-title{margin-bottom:20px;font-size:12px;letter-spacing:1.7px;color:#acb9cf}
 .booknow-form .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 22px}
 .booknow-form .field.full,.booknow-form .full{grid-column:1/-1}
-.booking-schedule{display:grid;grid-template-columns:1.03fr 1fr;gap:24px;align-items:start}
+.booking-schedule{display:grid;grid-template-columns:1fr;gap:0;border:1px solid var(--line);background:var(--bg)}
 .booking-month-panel,.booking-time-panel{min-width:0;padding:24px;border:1px solid var(--line);background:var(--bg)}
 .booking-month-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:23px}
 .booking-month-header>strong{font-size:18px;text-transform:capitalize;line-height:1.4}
@@ -64,3 +64,50 @@
 @media(max-width:380px){.booking-month-panel,.booking-time-panel{padding:13px}.booking-month-header>strong{font-size:15px}.booking-month-nav{width:28px;height:30px}.booking-weekdays,.booking-month-grid{gap:3px}.booking-month-day{font-size:14px;height:42px}.booking-hour-step{font-size:9px;padding:6px}.booking-slot-grid{gap:6px}.booking-slot strong{font-size:18px}.booking-slot small{font-size:9px}}
 @media(max-width:380px){.booking-range-selection{flex-direction:column;align-items:flex-start}.booking-range-selection strong{font-size:20px;white-space:nowrap}.booking-range-selection button{margin-top:3px}}
 @media(max-width:380px){.numbers-inner{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 12px}.number-item{min-width:0;gap:8px}.number-item p{font-size:10px}.number-item:last-child strong{font-size:12px}.number-item:last-child p{font-size:10px}}
+
+/* One week above its hourly slots, shared by the page and the booking dialog. */
+body.booking-in-view .promo-tab,body:has(.booking-modal) .promo-tab{visibility:hidden;pointer-events:none}
+.booknow-form .booking-format-fields{margin-bottom:22px}
+.booking-format-fields .form-section-title{font-size:11px;margin-bottom:14px}
+.booking-week-panel{padding:22px 24px 16px;min-width:0}
+.booking-week-header{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px}
+.booking-week-header h3{font:18px/1.3 var(--display)}
+.booking-week-header p{margin-top:6px;color:var(--muted);font-size:12px}
+.booking-week-controls{display:flex;gap:8px}
+.booking-week-nav{display:grid;place-items:center;flex-shrink:0;width:40px;height:40px;border:1px solid #35445c;background:#131d2b;color:#d9eaff}
+.booking-week-nav .site-icon{width:20px;height:20px}
+.booking-week-nav:hover:not(:disabled){background:#19314b;border-color:var(--blue)}
+.booking-week-nav:disabled{opacity:.28}
+.booknow-form .booking-quick-days{grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.booknow-form .booking-quick-day{min-height:86px;padding:10px 3px;gap:5px}
+.booknow-form .booking-quick-day>strong{font:25px/1.2 var(--display)}
+.booking-schedule .booking-time-panel{border:0;border-top:1px solid var(--line);padding:20px 24px}
+.booking-schedule .booking-time-header{margin-bottom:14px;min-height:0}
+.booking-schedule .booking-slot-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.booking-schedule .booking-slot{min-height:59px}
+.booking-schedule .booking-slot strong{font-size:18px}
+.booking-schedule .booking-range-selection{margin-top:14px;padding:13px 16px}
+@media(max-width:740px){
+ .booking-schedule{gap:0}
+ .booking-week-panel{padding:18px 14px 14px}
+ .booknow-form .booking-quick-days{gap:4px}
+ .booknow-form .booking-quick-day{min-height:76px;border-radius:3px}
+ .booknow-form .booking-quick-day>span{font-size:9px}
+ .booknow-form .booking-quick-day>strong{font-size:21px}
+ .booknow-form .booking-quick-day>small{font-size:8px;white-space:nowrap}
+ .booking-schedule .booking-time-panel{padding:18px 14px}
+ .booking-schedule .booking-slot-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:380px){
+ .booking-week-panel,.booking-schedule .booking-time-panel{padding-inline:10px}
+ .booknow-form .booking-quick-days{gap:3px}
+ .booknow-form .booking-quick-day>span{font-size:8px}
+ .booknow-form .booking-quick-day>small{font-size:7px}
+ .booking-week-header h3{font-size:16px}
+}
+
+.booking-section{padding-block:56px}
+.booking-section .section-head{margin-bottom:28px}
+.booking-section #booking-title{font-size:clamp(27px,3.2vw,39px);line-height:1.25}
+.booking-panel:has(.booknow-form){padding:26px}
+@media(max-width:540px){.booking-section{padding-block:40px}.booking-panel:has(.booknow-form){padding:19px 12px}.booking-section #booking-title{font-size:26px}}

@@ -104,7 +104,7 @@
     function renderCalendar() {
       element.querySelector('[data-week-title]').textContent = dateFormat(weekStart, {day:'numeric',month:'short'}) + ' — ' + dateFormat(offsetDate(weekStart,6), {day:'numeric',month:'short',year:'numeric'});
       element.querySelectorAll('[data-week]').forEach(button => {
-        button.disabled = busy || locked || calendarLoading || (Number(button.dataset.week) < 0 ? weekStart <= localDate() : offsetDate(weekStart,7) > localDate(90));
+        button.disabled = busy || locked || !service || (!service.autoAllocate && !field('stafferId').value) || calendarLoading || (Number(button.dataset.week) < 0 ? weekStart <= localDate() : offsetDate(weekStart,7) > localDate(90));
       });
       const days = element.querySelector('[data-quick-days]');
       days.setAttribute('aria-busy', String(calendarLoading));
@@ -235,7 +235,7 @@
       const preferred = opts.format === 'private' || opts.format === 'corporate' ? 'Закрытое мероприятие'
         : opts.format === 'birthday' ? ({60:'Старт праздника',120:'День за гранью',180:'Своя вселенная'}[Number(opts.duration)] || 'Старт праздника')
         : 'Одиночная игра';
-      const selected = location?.services.find(item => item.name === opts.package || item.name === preferred);
+      const selected = location?.services.find(item => item.name === opts.package) || location?.services.find(item => item.name === preferred);
       if (selected) field('serviceId').value = selected.id;
       field('serviceId').disabled = !location;
       return loadService();

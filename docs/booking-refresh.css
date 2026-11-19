@@ -111,3 +111,4 @@ body.booking-in-view .promo-tab,body:has(.booking-modal) .promo-tab{visibility:h
 .booking-section #booking-title{font-size:clamp(27px,3.2vw,39px);line-height:1.25}
 .booking-panel:has(.booknow-form){padding:26px}
 @media(max-width:540px){.booking-section{padding-block:40px}.booking-panel:has(.booknow-form){padding:19px 12px}.booking-section #booking-title{font-size:26px}}
+@media(max-width:540px){.booknow-form .booking-format-fields .form-grid{grid-template-columns:1fr}.booknow-form .booking-quick-day>small{display:none}.booknow-form .booking-quick-day{min-height:66px}}

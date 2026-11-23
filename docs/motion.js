@@ -74,3 +74,51 @@
   const app = document.getElementById('app');
   if (app) new MutationObserver(watchBookingSection).observe(app, {childList: true});
 })();
+
+// Keep native details/summary semantics and animate both directions, including reversals.
+(() => {
+  const preference = matchMedia('(prefers-reduced-motion: reduce)');
+  const active = new Map();
+  function finish(details, state) {
+    if (active.get(details) !== state) return;
+    state.animation.onfinish = null;
+    state.animation.oncancel = null;
+    state.animation.cancel();
+    details.open = state.opening;
+    details.style.removeProperty('height');
+    details.style.removeProperty('overflow');
+    active.delete(details);
+  }
+  document.addEventListener('click', event => {
+    const summary = event.target instanceof Element ? event.target.closest('.faq-list summary') : null;
+    if (!summary || event.defaultPrevented || event.button !== 0 || preference.matches) return;
+    const details = summary.parentElement;
+    if (typeof details.animate !== 'function') return;
+    event.preventDefault();
+    const previous = active.get(details);
+    const opening = previous ? !previous.opening : !details.open;
+    const start = details.getBoundingClientRect().height;
+    if (previous) {
+      previous.animation.onfinish = null;
+      previous.animation.oncancel = null;
+      previous.animation.cancel();
+    }
+    details.open = true;
+    details.style.height = 'auto';
+    const style = getComputedStyle(details);
+    const frame = ['borderTopWidth','borderBottomWidth','paddingTop','paddingBottom']
+      .reduce((sum, key) => sum + (parseFloat(style[key]) || 0), 0);
+    const end = opening ? details.getBoundingClientRect().height : summary.getBoundingClientRect().height + frame;
+    details.style.overflow = 'hidden';
+    details.style.height = end + 'px';
+    const animation = details.animate([{height:start+'px'}, {height:end+'px'}],
+      {duration:280, easing:'cubic-bezier(.22,.61,.36,1)', fill:'both'});
+    const state = {animation, opening};
+    active.set(details, state);
+    animation.onfinish = () => finish(details, state);
+    animation.oncancel = () => finish(details, state);
+  });
+  preference.addEventListener('change', () => {
+    if (preference.matches) for (const [details, state] of active) finish(details, state);
+  });
+})();

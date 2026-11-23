@@ -1,6 +1,7 @@
 import { mkdir, readdir, readFile, writeFile, copyFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 
 const root = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
 const source = path.join(root, 'dist');
@@ -9,6 +10,7 @@ const base = process.env.PAGES_BASE || '/za-granyu-vr-arena/';
 if (!/^\/(?:[a-zA-Z0-9_.-]+\/)*$/.test(base)) throw new Error('PAGES_BASE must be an absolute directory path ending in /.');
 const prefix = base.slice(0, -1);
 let count = 0;
+const htmlFiles = [];
 
 async function build(directory, relative = '') {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -35,6 +37,7 @@ async function build(directory, relative = '') {
       }
       if (name.endsWith('.css')) text = text.replaceAll("url('/assets/", `url('${base}assets/`);
       await writeFile(to, text, 'utf8');
+      if (name.endsWith('.html')) htmlFiles.push(to);
     } else {
       await copyFile(from, to);
     }
@@ -44,5 +47,17 @@ async function build(directory, relative = '') {
 
 await mkdir(output, { recursive: true });
 await build(source);
+// Pages caches assets; content versions make a normal refresh load the current UI.
+const versions = new Map();
+for (const file of htmlFiles) {
+  let html = await readFile(file, 'utf8');
+  for (const match of html.matchAll(/\b(?:href|src)=(['"])(\/[^'"]+\.(?:css|js))\1/g)) {
+    const [, quote, url] = match;
+    if (!url.startsWith(base)) continue;
+    if (!versions.has(url)) versions.set(url, createHash('sha256').update(await readFile(path.join(output, url.slice(base.length)))).digest('hex').slice(0, 12));
+    html = html.replaceAll(url + quote, url + '?v=' + versions.get(url) + quote);
+  }
+  await writeFile(file, html, 'utf8');
+}
 await writeFile(path.join(output, '.nojekyll'), '');
 console.log(`GitHub Pages: ${count} files in docs/, base ${base}`);

@@ -88,7 +88,8 @@ body{font-size:16px;--muted:#a8afbf}
 .faq-copy .text-link{font-size:15px}
 .steps h3{font-size:24px}
 .steps p{font-size:16px;line-height:1.8}
-.experience{margin-top:20px}
+.contact-section,.experience{border-block:0}
+.experience{margin-top:0}
 .experience-copy>p,.feature-row p{font-size:16px;line-height:1.75}
 .experience-copy .text-link{font-size:15px}
 .booking-section{border-top:1px solid #303747;scroll-margin-top:24px;background:#0c1019}

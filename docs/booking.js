@@ -7,6 +7,12 @@
   let catalogPromise;
   let sectionObserver;
   const ranges = window.ZGBookingRange;
+  const serviceLabel = item => ({'Одиночная игра':'Игра · 1 час','Закрытое мероприятие':'Команда · 1 час','День за гранью':'Праздник базовый · 2 часа','Своя вселенная':'Праздник максимум · 3 часа'}[item.name] || item.name);
+  const visibleServices = location => {
+    const order = ['Одиночная игра','Закрытое мероприятие','День за гранью','Своя вселенная'];
+    const rank = item => {const index = order.indexOf(item.name); return index < 0 ? order.length : index;};
+    return (location?.services || []).filter(item => item.name !== 'Старт праздника').sort((a,b) => rank(a)-rank(b));
+  };
   const durationLabel = minutes => minutes % 60 ? minutes + ' мин.' : minutes / 60 + ' ч';
 
   function clientToken() {
@@ -19,6 +25,10 @@
   }
 
   async function api(path, body) {
+    if (settings.preview === true) {
+      if (body || !window.ZGBookingPreviewAPI) throw new Error('Предпросмотр не создаёт записей');
+      return window.ZGBookingPreviewAPI(path);
+    }
     const response = await fetch(settings.apiBase + '/' + path, {method: body ? 'POST' : 'GET', credentials: 'same-origin',
       headers: body ? {'Content-Type': 'application/json'} : {}, body: body ? JSON.stringify(body) : undefined,
       signal: AbortSignal.timeout(28000)});
@@ -36,10 +46,11 @@
     queueMicrotask(() => mount(document.getElementById(id), opts));
     const offer = opts.promo;
     return `<form id="${id}" class="booking-form booknow-form">
+      ${settings.preview ? '<div class="booking-preview-notice" role="note"><strong>Предпросмотр формы</strong>Дни и часы показаны для примера. Это не актуальное расписание — запись из этой формы не отправляется.</div>' : ''}
       ${offer ? `<div class="booking-discount"><div class="booking-discount-heading"><span class="booking-discount-icon">${icon('gift')}</span><div><strong>Твоя скидка −${escapeHtml(offer.discountPercent)}%</strong><span>На выбранную бронь · до ${escapeHtml(new Date(offer.expiresAt).toLocaleDateString('ru-RU', {timeZone: 'Asia/Barnaul'}))}</span></div></div><p>Имя и телефон уже заполнены. Выбери услугу и время — бонус закрепится за записью. Администратор применит скидку к сумме заказа в BookNow.</p></div>` : ''}
       <fieldset class="booking-fields booking-format-fields"><legend class="form-section-title">Формат посещения</legend>
         <div class="form-grid">
-          <label class="field full" data-location><span>Локация</span><select name="locationId" required disabled>${option('', 'Загружаем BookNow…')}</select></label>
+          <label class="field full" data-location><span>Локация</span><select name="locationId" required disabled>${option('', 'Загружаем форматы…')}</select></label>
           <label class="field"><span>Формат игры</span><select name="serviceId" required disabled>${option('', 'Сначала выберите локацию')}</select></label>
           <label class="field full" data-staffer hidden><span>Инструктор / арена</span><select name="stafferId" disabled></select></label>
           <label class="field" data-quantity hidden><span>Количество мест</span><select name="quantity">${option('1', '1')}</select></label>
@@ -47,7 +58,7 @@
           <p class="muted small full" data-service-note></p>
         </div>
       </fieldset>
-      <fieldset class="booking-fields booking-schedule-fields"><legend class="form-section-title">01 / Выбери день и часы</legend>
+      <fieldset class="booking-fields booking-schedule-fields"><legend class="form-section-title">Выбери день и часы</legend>
         <input type="hidden" name="date" value="${localDate()}"><input type="hidden" name="time" value=""><input type="hidden" name="slotsCount" value="1">
         <div class="booking-schedule">
           <div class="booking-week-panel"><div class="booking-week-header"><div><h3>Выбери день</h3><p data-week-title></p></div><div class="booking-week-controls"><button type="button" class="booking-week-nav" data-week="-1" aria-label="Предыдущая неделя">${icon('left')}</button><button type="button" class="booking-week-nav" data-week="1" aria-label="Следующая неделя">${icon('arrow')}</button></div></div>
@@ -60,7 +71,7 @@
           </div>
         </div>
       </fieldset>
-      <fieldset class="booking-fields"><legend class="form-section-title">02 / Контакты для записи</legend>
+      <fieldset class="booking-fields"><legend class="form-section-title">Контакты для записи</legend>
         <div class="form-grid">
           <label class="field"><span>Как тебя зовут</span><input name="name" required minlength="2" maxlength="80" autocomplete="given-name" value="${escapeHtml(opts.name || '')}"></label>
           <label class="field"><span>Телефон</span><input name="phone" type="tel" required maxlength="24" autocomplete="tel" placeholder="+7 (999) 123-45-67" value="${escapeHtml(opts.phone || '')}"></label>
@@ -74,7 +85,7 @@
         <p class="booking-savings" data-savings hidden aria-live="polite"></p><p class="muted small" data-availability aria-live="polite">Проверяем доступные услуги…</p>
         <label class="consent"><input type="checkbox" name="callback"><span>Перезвоните мне для уточнения деталей</span></label>
         <label class="consent"><input type="checkbox" name="terms" required><span>Принимаю <a href="/za-granyu-vr-arena/terms/" target="_blank" rel="noopener">пользовательское соглашение</a>, включая возрастные ограничения и правила посещения.</span></label><label class="consent"><input type="checkbox" name="consent" required><span>Согласен на обработку и передачу данных в BookNow для оформления записи${offer ? ' и использования скидки' : ''} в соответствии с <a href="/za-granyu-vr-arena/privacy/" target="_blank" rel="noopener">политикой обработки персональных данных</a>.</span></label>
-        <p class="promo-error" data-error role="alert"></p><div class="form-actions"><button class="btn" type="submit" disabled>${offer ? 'Записаться со скидкой' : 'Забронировать время'}</button></div>
+        <p class="promo-error" data-error role="alert"></p><div class="form-actions"><button class="btn" type="submit" disabled>${settings.preview ? 'Предпросмотр — запись отключена' : offer ? 'Записаться со скидкой' : 'Забронировать время'}</button></div>${settings.preview ? '<a class="booking-preview-live" href="https://za-granyu22.ru/#booking" target="_blank" rel="noopener noreferrer">Перейти к реальной записи на сайте арены</a>' : ''}
       </div>
     </form>`;
   }
@@ -150,7 +161,7 @@
           const next = result.dates.find(day => day.count && day.date <= localDate(90));
           if (next) field('date').value = next.date;
         }
-        note.textContent = result.dates.some(day => day.count) ? 'Выбери дату с доступными сеансами' : 'На этой неделе свободных сеансов нет. Перелистни следующую неделю';
+        note.textContent = settings.preview ? 'Пример расписания для просмотра формы' : result.dates.some(day => day.count) ? 'Выбери дату с доступными сеансами' : 'На этой неделе свободных сеансов нет. Перелистни следующую неделю';
       } catch (failure) {
         if (version === calendarGeneration && element.isConnected) note.textContent = failure.message;
       } finally {
@@ -170,7 +181,7 @@
         total.textContent = format(base - reduction);
         if (discount) {before.textContent = format(base); before.hidden = false; savings.textContent = `Экономия ${format(reduction)} · скидка ${discount}% из колеса`; savings.hidden = false;}
       } else total.textContent = 'Уточняется у администратора';
-      submit.disabled = busy || locked || slotsLoading;
+      submit.disabled = settings.preview === true || busy || locked || slotsLoading;
     }
 
     function updateQuantity() {
@@ -197,7 +208,7 @@
         calendarDates.set(field('date').value, {date:field('date').value,count:slots.length});
         renderCalendar();
         note.textContent = slots.length ? (service.duration > 60 ? 'Один сеанс этого тарифа — ' + durationLabel(service.duration) + '. Он выделится целиком; соседние сеансы можно объединить.' : 'Нажимай на соседние часы, чтобы продлить игру. Повторное нажатие сокращает интервал.') : 'На эту дату нет свободных сеансов. Выбери другую дату';
-        availability.textContent = slots.length ? 'Свободное время подтверждено BookNow · начало каждый час' : 'Выберите другую дату или услугу';
+        availability.textContent = settings.preview ? 'Пример расписания. Реальные свободные сеансы — на сайте арены.' : slots.length ? 'Свободное время подтверждено BookNow · начало каждый час' : 'Выберите другую дату или услугу';
       } catch (failure) {
         if (version === slotGeneration && element.isConnected) {note.textContent = failure.message; availability.textContent = 'Не удалось обновить расписание. Выбери дату ещё раз';}
       } finally {
@@ -238,16 +249,23 @@
 
     function loadLocation(locations) {
       location = locations.find(item => item.id === field('locationId').value);
-      field('serviceId').innerHTML = (location?.services || []).map(item => option(item.id,item.name)).join('');
-      const preferred = opts.format === 'private' || opts.format === 'corporate' ? 'Закрытое мероприятие'
-        : opts.format === 'birthday' ? ({60:'Старт праздника',120:'День за гранью',180:'Своя вселенная'}[Number(opts.duration)] || 'Старт праздника')
+      const services = visibleServices(location);
+      field('serviceId').innerHTML = services.map(item => option(item.id,serviceLabel(item))).join('');
+      const preferred = opts.format === 'private' ? 'Закрытое мероприятие'
+        : ['birthday','corporate'].includes(opts.format) ? (Number(opts.duration) === 180 ? 'Своя вселенная' : 'День за гранью')
         : 'Одиночная игра';
-      const selected = location?.services.find(item => item.name === opts.package) || location?.services.find(item => item.name === preferred);
+      const packageName = {'Игра':'Одиночная игра','Команда':'Закрытое мероприятие','Праздник базовый':'День за гранью','Праздник максимум':'Своя вселенная'}[opts.package] || opts.package;
+      const selected = services.find(item => item.name === packageName) || services.find(item => item.name === preferred);
       if (selected) field('serviceId').value = selected.id;
-      field('serviceId').disabled = !location;
+      field('serviceId').disabled = !services.length;
       return loadService();
     }
 
+    element.addEventListener('zg:select-format', event => {
+      if (busy || locked) return;
+      Object.assign(opts, event.detail);
+      if (location) void loadLocation([location]);
+    });
     renderCalendar(); renderSlots();
     element.addEventListener('change', event => {
       error.textContent = '';
@@ -283,6 +301,7 @@
     });
     element.addEventListener('submit', async event => {
       event.preventDefault();
+      if (settings.preview === true) {error.textContent = 'Предпросмотр не создаёт записей. Для бронирования перейди на сайт арены.'; return;}
       if (busy || locked || !element.reportValidity()) return;
       if (!ranges.rangeFor(slots,field('time').value,Number(field('slotsCount').value))) {error.textContent = 'Выберите свободное время в календаре'; return;}
       busy = true;
@@ -298,7 +317,7 @@
           consent: true, callback: field('callback').checked, quantity: Number(data.quantity || 1), slotsCount:Number(data.slotsCount || 1), terms:data.terms === 'on', promoId: opts.promo?.id || null});
         if (!element.isConnected) return;
         element.innerHTML = `<div class="success"><div class="success-icon">${icon('check')}</div>
-          <h3>Запись оформлена в BookNow</h3><p>${escapeHtml(result.service)}</p>
+          <h3>Запись оформлена в BookNow</h3><p>${escapeHtml(serviceLabel({name:result.service}))}</p>
           <p>${escapeHtml(new Date(result.start).toLocaleString('ru-RU', {timeZone: result.timezone, dateStyle: 'long', timeStyle: 'short'}))}</p>
           ${result.end ? `<p>До ${escapeHtml(new Date(result.end).toLocaleTimeString('ru-RU',{timeZone:result.timezone,hour:'2-digit',minute:'2-digit'}))} · ${escapeHtml(durationLabel(result.durationMinutes))}</p>` : ''}<p>${escapeHtml(result.status)}</p><span class="reference">${escapeHtml(result.id)}</span>
           ${result.discountPercent ? `<div class="booking-success-discount"><strong>Скидка ${escapeHtml(result.discountPercent)}% закреплена за бронью</strong>

@@ -22,6 +22,9 @@ async function build(directory, relative = '') {
     }
     if (['.html', '.css', '.js'].includes(path.extname(name))) {
       let text = await readFile(from, 'utf8');
+      // Show the complete form in review builds without contacting the live CRM.
+      if (name === 'booknow-config.js') text = "'use strict';\nwindow.ZG_BOOKING_CONFIG=Object.freeze({enabled:true,preview:true,apiBase:'/api/booking'});\n";
+      if (name.endsWith('.html')) text = text.replace('<script src="/booking.js" defer></script>', '<script src="/booking-preview.js" defer></script>\n  <script src="/booking.js" defer></script>');
       // HTML attributes also occur inside the application's template strings.
       text = text.replace(/\b(href|src)=(['"])\/(?!\/)/g, (_match, attr, quote) => `${attr}=${quote}${base}`);
       if (name === 'app.js') {

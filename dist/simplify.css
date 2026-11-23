@@ -8,6 +8,8 @@ body{font-size:16px;--muted:#a8afbf}
 .social-links a{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;padding:10px 14px;color:#fff;background:#c51c2b;border:1px solid #f04759;transition:background .2s}
 .social-links a:hover{background:#e92b3e}
 .social-links svg{width:24px;height:24px;stroke-width:2}
+.social-links .max-logo{display:block;width:24px;height:24px;object-fit:contain;flex-shrink:0}
+.mobile-actions .max-logo{display:block;width:22px;height:22px;object-fit:contain;flex-shrink:0}
 .social-links span{font-weight:750;font-size:14px}
 .header-inner{gap:18px}
 .header .brand img{width:180px}
@@ -30,6 +32,14 @@ body{font-size:16px;--muted:#a8afbf}
 .footer-about p{font-size:16px;max-width:310px}
 .footer-links a{font-size:16px}
 .footer-legal{font-size:14px}
+.footer-main{grid-template-columns:1.05fr .7fr 1fr 180px;gap:32px}
+.footer-qr{display:flex;flex-direction:column;align-items:flex-start;gap:10px;align-self:start;max-width:180px}
+.footer-qr-image{display:block;padding:8px;background:#fff;border-radius:8px;border:1px solid #fff}
+.footer-qr-image img{display:block;width:160px;height:160px;object-fit:contain}
+.footer-qr strong{font-size:15px;font-weight:750}
+.footer-qr>span:last-child{font-size:13px;line-height:1.6;color:#b5bfd0}
+.footer-qr:hover strong{color:#ff6573}
+.footer-qr:hover .footer-qr-image{border-color:#ff6573}
 .events-section{padding-top:56px;padding-bottom:54px}
 .event-card{min-height:310px;padding:32px}
 .event-card h3{font-size:clamp(25px,2.4vw,34px);max-width:430px}
@@ -109,7 +119,7 @@ body{font-size:16px;--muted:#a8afbf}
 .inner-hero .hero-sub{font-size:18px;max-width:520px;line-height:1.75}
 .inner-hero .hero-badges span{font-size:14px}
 @media(max-width:1200px){.header-contact{display:none}.header-socials{margin-left:auto}.desktop-nav{margin-inline:auto}.tariff-table thead th{padding:18px 12px}.tariff-table tbody th,.tariff-table td{padding:24px 12px}.tariff-name h3{font-size:19px}.tariff-price{font-size:21px}.tariff-name{gap:10px}.tariff-name>.site-icon{width:23px;height:23px}}
-@media(max-width:1000px){.header-socials{margin-left:auto}.header-phone{margin-left:0}.header .brand img{width:190px}.header-inner{gap:12px}.tariff-table thead th{font-size:13px}.tariff-name>.site-icon{display:none}.tariff-name h3{font-size:18px}.tariff-price{font-size:19px}.tariff-includes{font-size:14px}.tariff-action .btn{font-size:13px;padding-inline:12px}.contact-inner{gap:24px}.section-intro{font-size:16px}.price-grid-event .price-card{padding:26px}.price-grid-event .price-card h3{font-size:25px;min-height:64px}}
+@media(max-width:1000px){.header-socials{margin-left:auto}.header-phone{margin-left:0}.header .brand img{width:190px}.header-inner{gap:12px}.tariff-table thead th{font-size:13px}.tariff-name>.site-icon{display:none}.tariff-name h3{font-size:18px}.tariff-price{font-size:19px}.tariff-includes{font-size:14px}.tariff-action .btn{font-size:13px;padding-inline:12px}.contact-inner{gap:24px}.section-intro{font-size:16px}.price-grid-event .price-card{padding:26px}.price-grid-event .price-card h3{font-size:25px;min-height:64px}.footer-main{grid-template-columns:1fr 1fr;gap:32px}.footer-about{grid-column:auto}}
 @media(max-width:760px){
  .wrap{padding-inline:20px}.section{padding-block:52px}.section-head{display:block}.section-intro{margin-top:18px;max-width:100%}.section-intro br{display:none}h2{font-size:clamp(28px,7vw,36px);line-height:1.2}
  .header-socials{display:none}.header .brand img{width:190px}.header-phone{margin-left:auto}
@@ -127,7 +137,7 @@ body{font-size:16px;--muted:#a8afbf}
  .contact-inner{gap:0}.contact-copy{padding-block:44px 12px}.yandex-map iframe{min-height:360px}.yandex-map-heading p,.yandex-map-footer span{font-size:14px}.yandex-map{margin-bottom:44px}.contact-info p,.contact-info a{font-size:17px}
  .experience-copy>p,.feature-row p{font-size:16px}.feature-row b{font-size:17px}.included h3{font-size:22px}.included p,.included-photos .included p{font-size:16px}
  .booking-panel{padding:24px 16px}.booking-intro{font-size:16px;line-height:1.8}.booking-intro br{display:none}.booking-panel .form-grid{gap:20px}.booking-panel .field,.booknow-form .field{font-size:15px}.booking-panel .field input,.booking-panel .field select,.booknow-form .field input,.booknow-form .field select{font-size:16px}.booknow-form .consent{font-size:14px}.booking-week-panel,.booking-time-panel{padding-inline:12px}.booking-schedule-note{font-size:13px}.booking-week-header p,.booking-time-header p{font-size:13px}.booking-quick-day>small{font-size:11px}.booking-quick-day>span{font-size:12px}
- .footer{padding-bottom:24px}.footer-main{gap:30px}.footer-about p,.footer-contacts p,.footer-links a{font-size:16px}.footer-legal{font-size:13px}
+ .footer{padding-bottom:24px}.footer-main{grid-template-columns:1fr;gap:30px}.footer-about p,.footer-contacts p,.footer-links a{font-size:16px}.footer-legal{font-size:13px}.footer-qr{max-width:220px}.footer-qr-image img{width:180px;height:180px}
  body{padding-bottom:calc(70px + env(safe-area-inset-bottom))}.mobile-actions{position:fixed;bottom:0;left:0;right:0;z-index:34;display:grid;grid-template-columns:repeat(3,1fr) 1.3fr;background:#0c111eee;border-top:1px solid #37445c;backdrop-filter:blur(12px);padding:8px 8px calc(8px + env(safe-area-inset-bottom));gap:4px}
  .mobile-actions a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:52px;font-size:11px;line-height:1.25;color:#e9edf6}.mobile-actions b{font:700 20px/22px var(--font);color:#ff6573}.mobile-actions svg{width:22px;height:22px}.mobile-actions .mobile-book{background:#cc2333;color:#fff;border-radius:4px}.mobile-actions a:hover{background:#ffffff12}.mobile-actions .mobile-book:hover{background:#ee3445}
  body.locked .mobile-actions{display:none}.mobile-nav.open{bottom:0;padding-bottom:30px}.promo-tab{bottom:calc(90px + env(safe-area-inset-bottom));top:auto;transform:none}.toast{bottom:calc(88px + env(safe-area-inset-bottom))}

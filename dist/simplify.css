@@ -63,6 +63,13 @@ body{font-size:16px;--muted:#a8afbf}
 .tariff-price{font:23px/1.3 var(--display);white-space:nowrap;font-variant-numeric:tabular-nums}
 .tariff-includes{width:28%;font-size:15px;color:#c5cddd;line-height:1.75}
 .tariff-action .btn{min-height:46px;font-size:14px;padding:10px 16px}
+.tariff-table tbody tr.tariff-recommended{background:linear-gradient(90deg,#ff303d1c,#ff303d08);box-shadow:inset 3px 0 0 #e74756;border-color:#78313e}
+.tariff-recommendation,.tariff-name .tariff-recommendation{display:inline-flex;align-items:center;gap:6px;max-width:100%;margin-top:10px;padding:4px 7px;border:1px solid #ff52634d;border-radius:3px;background:#ff303d12;color:#ffb4bd;font-size:12px;font-weight:750;line-height:1.4}
+.tariff-recommendation .site-icon{width:14px;height:14px;fill:currentColor;flex-shrink:0}
+.price-recommendation-slot{min-height:35px;margin-top:8px}
+.price-recommendation-slot .tariff-recommendation{margin-top:0}
+.tariff-recommended .tariff-action .btn{border-color:#a94050;background:#ff303d12}
+.tariff-recommended .tariff-action .btn:hover{background:#ff303d26;border-color:#ff6573}
 .pricing-note{display:flex;align-items:flex-start;gap:10px;margin-top:22px;font-size:14px;color:#a9b6cc;line-height:1.7}
 .price-grid.price-grid-event{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));max-width:980px;margin-inline:auto;gap:28px}
 .price-grid-event .price-card{padding:34px;display:flex;flex-direction:column}

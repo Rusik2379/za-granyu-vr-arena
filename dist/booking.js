@@ -46,7 +46,7 @@
     queueMicrotask(() => mount(document.getElementById(id), opts));
     const offer = opts.promo;
     return `<form id="${id}" class="booking-form booknow-form">
-      ${offer ? `<div class="booking-discount"><div class="booking-discount-heading"><span class="booking-discount-icon">${icon('gift')}</span><div><strong>Твоя скидка −${escapeHtml(offer.discountPercent)}%</strong><span>На выбранную бронь · до ${escapeHtml(new Date(offer.expiresAt).toLocaleDateString('ru-RU', {timeZone: 'Asia/Barnaul'}))}</span></div></div><p>Имя и телефон уже заполнены. Выбери услугу и время — бонус закрепится за записью. Администратор применит скидку к сумме заказа в BookNow.</p></div>` : ''}
+      ${offer ? `<div class="booking-discount"><div class="booking-discount-heading"><span class="booking-discount-icon">${icon('gift')}</span><div><strong>Твоя скидка −${escapeHtml(offer.discountPercent)}%</strong><span>На выбранную бронь · до ${escapeHtml(new Date(offer.expiresAt).toLocaleDateString('ru-RU', {timeZone: 'Asia/Barnaul'}))}</span></div></div><p>Скидка учтена в расчёте. Администратор применит её к заказу при подтверждении записи.</p></div>` : ''}
       <fieldset class="booking-fields booking-format-fields"><legend class="form-section-title">Формат посещения</legend>
         <div class="form-grid">
           <label class="field full" data-location><span>Локация</span><select name="locationId" required disabled>${option('', 'Загружаем форматы…')}</select></label>
@@ -357,8 +357,8 @@
   }
 
   function open(opts = {}) {
-    modal(`<div class="eyebrow">Онлайн-запись</div><h2 id="modal-title">${opts.promo ? 'ЗАПИСАТЬСЯ СО СКИДКОЙ' : 'ТВОЯ СЛЕДУЮЩАЯ ИГРА'}</h2>
-      <p class="modal-intro">Сначала выбери день и время. В игре поможет разобраться инструктор.</p>${form(opts)}`, 'booking-modal');
+    modal(`<div class="eyebrow">Онлайн-запись</div><h2 id="modal-title">${opts.promo ? 'ИГРА СО СКИДКОЙ' : 'ТВОЯ СЛЕДУЮЩАЯ ИГРА'}</h2>
+      <p class="modal-intro">${opts.promo ? 'Контакты уже заполнены. Выбери формат, день и часы игры.' : 'Выбери формат, день и часы игры.'}</p>${form(opts)}`, 'booking-modal');
   }
   function privacy() {document.querySelector('[data-privacy-link]')?.click();}
   window.ZGBooking = Object.freeze({enabled: settings.enabled === true, form, open, privacy});

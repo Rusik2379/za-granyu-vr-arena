@@ -52,7 +52,7 @@
   }
   function draw() {
     const preview=rules.mode==='preview';
-    modal(`<div class="promo-layout"><div class="promo-art"><div class="promo-art-topline"><span>ЗА ГРАНЬЮ / VR-АРЕНА</span><span class="promo-max">ДО −${Math.max(...rules.prizes)}%</span></div>${wheelArtwork()}<div class="promo-art-footer">${icon('gift')} Скидка на следующее посещение</div></div><div class="promo-details"><div class="eyebrow">${preview?'Предпросмотр акции':'Подарок перед игрой'}</div><h2 id="modal-title">КОЛЕСО<br><span>ТВОЕЙ УДАЧИ</span></h2><p class="modal-intro">${preview?'Введи вымышленные имя и телефон, чтобы проверить колесо и увидеть свой результат.':'Оставь имя и телефон, крути колесо и забирай скидку на следующее посещение.'}</p><div class="promo-benefits"><span>${icon('gift')} Скидка до ${Math.max(...rules.prizes)}%</span><span>${icon('clock')} ${rules.validityDays} дней на игру</span></div><form id="promo-form"><div class="form-grid"><label class="field"><span>Твоё имя</span><input name="name" required minlength="2" maxlength="80" autocomplete="given-name" placeholder="Как тебя зовут"></label><label class="field"><span>Номер телефона</span><input name="phone" type="tel" required maxlength="24" autocomplete="tel" inputmode="tel" placeholder="+7 (999) 123-45-67"></label></div><label class="promo-honeypot" aria-hidden="true">Ваш сайт<input name="website" tabindex="-1" autocomplete="off"></label>${preview ? "" : `<label class="consent"><input name="consent" type="checkbox" required><span>Согласен на обработку имени и телефона для сохранения результата колеса и использования скидки в соответствии с <a href="/za-granyu-vr-arena/privacy/" target="_blank" rel="noopener">политикой обработки персональных данных</a></span></label>`}<p class="promo-error" id="promo-error" role="alert"></p><button class="btn" type="submit" id="promo-spin">${preview?'Прокрутить для примера':'Крутить колесо'} ${icon('arrow')}</button><p class="promo-rules">${preview?'Пробный режим — бонус недействителен, заявка в CRM не отправляется.':'Один номер участвует один раз. Администратор проверит номер при использовании скидки.'}</p></form><div id="promo-result" class="promo-result" role="status" aria-live="polite"></div></div></div>`,'wheel-modal promo-modal');
+    modal(`<div class="promo-layout"><div class="promo-art"><div class="promo-art-topline"><span>ЗА ГРАНЬЮ / VR-АРЕНА</span><span class="promo-max">ДО −${Math.max(...rules.prizes)}%</span></div>${wheelArtwork()}<div class="promo-art-footer">${icon('gift')} Скидка на следующее посещение</div></div><div class="promo-details"><div class="eyebrow">Подарок перед игрой</div><h2 id="modal-title">КОЛЕСО<br><span>ТВОЕЙ УДАЧИ</span></h2><p class="modal-intro">Оставь имя и телефон, крути колесо и выбери время для игры со скидкой.</p><div class="promo-benefits"><span>${icon('gift')} Скидка до ${Math.max(...rules.prizes)}%</span><span>${icon('clock')} ${rules.validityDays} дней на игру</span></div><form id="promo-form"><div class="form-grid"><label class="field"><span>Твоё имя</span><input name="name" required minlength="2" maxlength="80" autocomplete="given-name" placeholder="Как тебя зовут"></label><label class="field"><span>Номер телефона</span><input name="phone" type="tel" required maxlength="24" autocomplete="tel" inputmode="tel" placeholder="+7 (999) 123-45-67"></label></div><label class="promo-honeypot" aria-hidden="true">Ваш сайт<input name="website" tabindex="-1" autocomplete="off"></label>${preview ? "" : `<label class="consent"><input name="consent" type="checkbox" required><span>Согласен на обработку имени и телефона для сохранения результата колеса и использования скидки в соответствии с <a href="/za-granyu-vr-arena/privacy/" target="_blank" rel="noopener">политикой обработки персональных данных</a></span></label>`}<p class="promo-error" id="promo-error" role="alert"></p><button class="btn" type="submit" id="promo-spin">Крутить колесо ${icon('arrow')}</button><p class="promo-rules">${preview?'На GitHub показан расчёт бонуса. Действующую скидку можно получить на сайте арены.':'Один номер участвует один раз. Администратор проверит номер при использовании скидки.'}</p></form><div id="promo-result" class="promo-result" role="status" aria-live="polite"></div></div></div>`,'wheel-modal promo-modal');
     $('.promo-tab')?.setAttribute('aria-expanded','true');
   }
   async function open() {
@@ -62,17 +62,21 @@
     const phone=phoneNumber(data.phone);
     const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(phone)))].map(n=>n.toString(16).padStart(2,'0')).join('');
     const previous=readStore(storageKey,null);
-    if(previous){if(previous.phoneHash!==hash)throw Error('В этом браузере колесо уже проверяли');return {...previous.result,repeated:true};}
+    if(previous){if(previous.phoneHash!==hash)throw Error('В этом браузере уже сохранён результат для другого номера');if(Date.parse(previous.result.expiresAt)>Date.now())return {...previous.result,repeated:true};}
     const random=crypto.getRandomValues(new Uint32Array(1))[0];
     const sector=random%rules.prizes.length;
     const result={id:'ПРИМЕР-'+crypto.randomUUID().slice(0,8).toUpperCase(),sector,discountPercent:rules.prizes[sector],expiresAt:new Date(Date.now()+rules.validityDays*86400000).toISOString(),delivery:'preview',repeated:false};
     if(!writeStore(storageKey,{phoneHash:hash,result}))throw Error('Не удалось сохранить пример результата');
     return result;
   }
+  // A sample bonus can only open the read-only Pages booking adapter.
+  function canBook() {
+    return window.ZGBooking?.enabled && (rules?.mode === 'live' || (rules?.mode === 'preview' && window.ZG_BOOKING_CONFIG?.preview === true));
+  }
   function resultMarkup(result) {
     const preview=rules.mode==='preview';
     const expiry=new Date(result.expiresAt).toLocaleDateString('ru-RU',{timeZone:'Asia/Barnaul'});
-    return `<div class="promo-discount">−${result.discountPercent}%</div><h3>${preview?'ПРИМЕР ТВОЕГО БОНУСА':'ТВОЯ СКИДКА НА ИГРУ'}</h3><p>${result.repeated?'Этот номер уже участвовал — показываем прежний результат. ':''}${preview?'Пробный результат сохранён в браузере. Заявка в CRM не отправлялась.':'Забери скидку на бронь: выбери услугу и свободное время в следующем окне. Имя и телефон уже будут заполнены.'}</p><span class="reference">${esc(result.id)}</span><p>${preview?'Пример срока':'Посетить арену до'}: ${expiry}</p>${!preview && window.ZGBooking?.enabled?`<button class="btn" type="button" data-promo-book>Применить скидку к брони ${icon('arrow')}</button>`:''}<button class="btn btn-outline" type="button" data-action="close">Вернуться на сайт ${icon('arrow')}</button>`;
+    return `<div class="promo-discount">−${result.discountPercent}%</div><h3>${preview?'ТВОЙ РЕЗУЛЬТАТ':'ТВОЯ СКИДКА НА ИГРУ'}</h3><p>${result.repeated?'Этот номер уже участвовал — показываем прежний результат. ':''}${preview?'Посмотри стоимость записи с этим бонусом. Действующую скидку получи на сайте арены.':'Забери скидку на бронь: выбери услугу и свободное время в следующем окне. Имя и телефон уже будут заполнены.'}</p>${preview ? '' : `<span class="reference">${esc(result.id)}</span>`}<p>${preview?'Расчёт до':'Посетить арену до'}: ${expiry}</p>${canBook()?`<button class="btn" type="button" data-promo-book>Выбрать время со скидкой</button>`:''}<button class="btn btn-outline" type="button" data-action="close">Вернуться на сайт ${icon('arrow')}</button>`;
   }
   document.addEventListener('submit',async event=>{
     if(event.target.id!=='promo-form')return;
@@ -101,10 +105,10 @@
       form.closest('.promo-modal')?.classList.remove('is-spinning');
       wheel.querySelector('[data-sector="'+result.sector+'"]')?.classList.add('is-winning');
       form.hidden=true;$('#promo-result').innerHTML=resultMarkup(result);
-    } catch(failure) {if(form.isConnected){form.closest('.promo-modal')?.classList.remove('is-spinning');error.textContent=failure.message;button.disabled=false;button.textContent=rules.mode==='preview'?'Прокрутить для примера':'Крутить колесо';}}
+    } catch(failure) {if(form.isConnected){form.closest('.promo-modal')?.classList.remove('is-spinning');error.textContent=failure.message;button.disabled=false;button.textContent='Крутить колесо';}}
   });
   document.addEventListener('click', event => {
-    if(event.target.closest('[data-promo-book]') && rules?.mode==='live' && bookingOffer) window.ZGBooking?.open(bookingOffer);
+    if(event.target.closest('[data-promo-book]') && canBook() && bookingOffer) window.ZGBooking?.open(bookingOffer);
   });
   window.ZGPromo=Object.freeze({open});
 })();

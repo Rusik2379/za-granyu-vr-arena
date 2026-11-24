@@ -105,9 +105,7 @@ body{font-size:16px;--muted:#a8afbf}
 .experience-copy .text-link{font-size:15px}
 .booking-section{border-top:1px solid #303747;scroll-margin-top:24px;background:#0c1019}
 .booking-intro{font-size:16px}
-.booking-preview-notice{padding:20px;margin-bottom:28px;border:1px solid #3c6b96;background:#132437;color:#dbeeff;font-size:15px;line-height:1.8}
-.booking-preview-notice strong{display:block;margin-bottom:5px}
-.booking-preview-live{display:inline-flex;margin-top:18px;color:#b6dcff;text-decoration:underline;font-size:15px}
+.booking-preview-live{display:inline-flex;text-decoration:none}
 .booking-panel .field,.booknow-form .field{font-size:16px}
 .booking-panel .field input,.booking-panel .field select,.booknow-form .field input,.booknow-form .field select{font-size:16px;min-height:50px}
 .booknow-form .form-section-title,.booking-format-fields .form-section-title{font-size:14px;letter-spacing:1px}
@@ -201,3 +199,68 @@ body{font-size:16px;--muted:#a8afbf}
  .hero.home-hero .hero-inner{flex:none;gap:16px}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+/* Compact booking: a seven-day strip followed by hourly choices. */
+.booking-panel:has(.booknow-form){max-width:980px;margin-inline:auto;padding:24px}
+.booknow-form .booking-fields,.booknow-form .booking-format-fields{margin-bottom:22px}
+.booknow-form .form-section-title{margin-bottom:14px;padding-bottom:10px;font-size:12px}
+.booknow-form .form-grid{gap:12px 18px}
+.booknow-form .field{gap:7px;font-size:15px}
+.booknow-form .field input,.booknow-form .field select{min-height:46px;padding-block:10px}
+.booknow-form [data-service-note]{margin:0;font-size:13px;line-height:1.6}
+.booknow-form .booking-schedule{gap:0}
+.booknow-form .booking-week-panel{padding:14px 16px}
+.booknow-form .booking-week-header{margin-bottom:12px;gap:12px}
+.booknow-form .booking-week-header>div:first-child{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.booknow-form .booking-week-header h3,.booknow-form .booking-time-header h3{font-size:16px}
+.booknow-form .booking-week-header p,.booknow-form .booking-time-header p{margin:0;font-size:13px}
+.booknow-form .booking-week-nav{width:44px;height:44px}
+.booknow-form .booking-quick-days{gap:6px}
+.booknow-form .booking-quick-day{min-height:60px;padding:7px 3px;gap:3px;border-radius:5px}
+.booknow-form .booking-quick-day>span{font-size:12px;line-height:1.25;text-transform:capitalize}
+.booknow-form .booking-quick-day>strong{font-size:22px;line-height:1.2}
+.booknow-form .booking-quick-day.is-today{box-shadow:inset 0 0 0 1px #a8d8ff88}
+.booknow-form .booking-quick-day[aria-pressed=true]{box-shadow:0 3px 12px #ff304022}
+.booknow-form .booking-schedule .booking-time-panel{padding:14px 16px}
+.booknow-form .booking-time-header{margin-bottom:12px;align-items:center;gap:10px}
+.booknow-form .booking-time-header>div{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.booknow-form .booking-hour-step{padding:5px 7px;font-size:11px}
+.booknow-form .booking-schedule .booking-slot-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.booknow-form .booking-schedule .booking-slot{min-height:48px;padding:5px;gap:2px;position:relative}
+.booknow-form .booking-slot strong{font-size:16px;line-height:1.2}
+.booknow-form .booking-slot small{font-size:12px;line-height:1.2}
+.booknow-form .booking-slot .site-icon{position:absolute;right:5px;top:5px;width:12px;height:12px}
+.booknow-form .booking-range-selection{margin-top:12px;padding:10px 12px;gap:10px;align-items:center}
+.booknow-form .booking-range-selection>div{display:flex;align-items:baseline;gap:8px 12px;flex-wrap:wrap;min-width:0}
+.booknow-form .booking-range-selection span{font-size:12px}
+.booknow-form .booking-range-selection strong{font-size:19px;white-space:normal;overflow-wrap:anywhere}
+.booknow-form .booking-range-selection small{font-size:12px;margin:0}
+.booknow-form .booking-range-selection button{min-height:44px;padding:7px 10px;margin:0}
+.booknow-form .booking-schedule-note{font-size:12px;line-height:1.6;margin-top:10px;min-height:0}
+.booknow-form .booking-schedule-note:empty,.booknow-form .promo-error:empty{display:none}
+.booknow-form .booking-form-bottom{gap:12px;padding-top:18px}
+.booknow-form .consent,.booknow-form [data-availability]{font-size:14px;line-height:1.6}
+.booknow-form .booking-total>span{font-size:13px}
+@media(max-width:740px){
+ .booking-section>.wrap{padding-inline:12px}
+ .booking-panel:has(.booknow-form){padding:18px 8px}
+ .booknow-form .form-grid{gap:12px}
+ .booknow-form .field input,.booknow-form .field select{font-size:16px}
+ .booknow-form .booking-week-panel,.booknow-form .booking-schedule .booking-time-panel{padding:12px 10px}
+ .booknow-form .booking-week-header>div:first-child,.booknow-form .booking-time-header>div{display:block}
+ .booknow-form .booking-week-header p,.booknow-form .booking-time-header p{margin-top:4px;font-size:12px}
+ .booknow-form .booking-week-controls{gap:4px}
+ .booknow-form .booking-quick-days{gap:4px}
+ .booknow-form .booking-quick-day{min-height:55px}
+ .booknow-form .booking-quick-day>span{font-size:11px}
+ .booknow-form .booking-quick-day>strong{font-size:20px}
+ .booknow-form .booking-schedule .booking-slot-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+ .booknow-form .booking-schedule .booking-slot{min-height:48px}
+ .booknow-form .booking-slot strong{font-size:16px}
+ .booknow-form .booking-slot small{display:none}
+ .booknow-form .booking-range-selection{padding:8px 10px;flex-direction:row;align-items:center}
+ .booknow-form .booking-range-selection>div{display:block}
+ .booknow-form .booking-range-selection strong,.booknow-form .booking-range-selection small{display:block}
+ .booknow-form .booking-range-selection strong{font-size:18px}
+ .booknow-form .booking-range-selection small{margin-top:3px}
+ .booknow-form .booking-range-selection button{flex-shrink:0}
+}

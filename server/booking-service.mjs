@@ -173,7 +173,7 @@ export function createBookingService({client, promo, databasePath, secret, now =
       if (row.state === 'confirmed' && (JSON.parse(row.result).slotsCount || 1) !== slotsCount) fail(409, 'DUPLICATE', 'На это время уже оформлена запись с другой длительностью. Уточните её у администратора');
       return previous(row, ownerHash);
     }
-    const note = [`Гостей в компании: ${guests}.`, `Выбранный интервал: ${input.date}, ${interval.start}–${interval.end} (${interval.durationMinutes} мин., ${slotsCount} сеанс.).`, scenario ? 'Пожелание по игре: ' + scenario : '', message,
+    const note = ['Новый заказ с сайта.', `Гостей в компании: ${guests}.`, `Выбранный интервал: ${input.date}, ${interval.start}–${interval.end} (${interval.durationMinutes} мин., ${slotsCount} сеанс.).`, scenario ? 'Пожелание по игре: ' + scenario : '', message,
       offer ? `Колесо скидок: ${offer.discountPercent}%. ${quote ? `Стоимость ${quote.baseLabel}, скидка ${quote.discountLabel}, к оплате ${quote.totalLabel}. ` : ''}Бонус ${offer.id}. Действует до ${offer.expiresAt}. Применить скидку вручную и проверить номер при посещении.` : '',
       'Пользователь принял пользовательское соглашение /terms/ и политику обработки данных /privacy/.',
       `Запись с сайта. Запрос ${input.requestId}.`].filter(Boolean).join('\n');

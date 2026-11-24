@@ -47,6 +47,7 @@ test('multiple adjacent hours create one native BookNow booking with the total v
   assert.equal(result.end,'2026-11-11T08:00:00Z');assert.equal(result.durationMinutes,180);
   assert.deepEqual([result.quote.baseMinor,result.quote.totalMinor],[600000,558000]);
   assert.match(f.calls[0].booking_comment,/12:00–15:00/);
+  assert.match(f.calls[0].booking_comment,/^Новый заказ с сайта\./);
   await assert.rejects(f.bookings.book({...input,requestId:randomUUID(),slotsCount:1}),{code:'DUPLICATE'});
   assert.equal(f.calls.length,1);
 });

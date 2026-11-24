@@ -46,7 +46,6 @@
     queueMicrotask(() => mount(document.getElementById(id), opts));
     const offer = opts.promo;
     return `<form id="${id}" class="booking-form booknow-form">
-      ${settings.preview ? '<div class="booking-preview-notice" role="note"><strong>Предпросмотр формы</strong>Дни и часы показаны для примера. Это не актуальное расписание — запись из этой формы не отправляется.</div>' : ''}
       ${offer ? `<div class="booking-discount"><div class="booking-discount-heading"><span class="booking-discount-icon">${icon('gift')}</span><div><strong>Твоя скидка −${escapeHtml(offer.discountPercent)}%</strong><span>На выбранную бронь · до ${escapeHtml(new Date(offer.expiresAt).toLocaleDateString('ru-RU', {timeZone: 'Asia/Barnaul'}))}</span></div></div><p>Имя и телефон уже заполнены. Выбери услугу и время — бонус закрепится за записью. Администратор применит скидку к сумме заказа в BookNow.</p></div>` : ''}
       <fieldset class="booking-fields booking-format-fields"><legend class="form-section-title">Формат посещения</legend>
         <div class="form-grid">
@@ -61,13 +60,13 @@
       <fieldset class="booking-fields booking-schedule-fields"><legend class="form-section-title">Выбери день и часы</legend>
         <input type="hidden" name="date" value="${localDate()}"><input type="hidden" name="time" value=""><input type="hidden" name="slotsCount" value="1">
         <div class="booking-schedule">
-          <div class="booking-week-panel"><div class="booking-week-header"><div><h3>Выбери день</h3><p data-week-title></p></div><div class="booking-week-controls"><button type="button" class="booking-week-nav" data-week="-1" aria-label="Предыдущая неделя">${icon('left')}</button><button type="button" class="booking-week-nav" data-week="1" aria-label="Следующая неделя">${icon('arrow')}</button></div></div>
+          <div class="booking-week-panel"><div class="booking-week-header"><div><h3>Дата</h3><p data-week-title></p></div><div class="booking-week-controls"><button type="button" class="booking-week-nav" data-week="-1" aria-label="Предыдущая неделя">${icon('left')}</button><button type="button" class="booking-week-nav" data-week="1" aria-label="Следующая неделя">${icon('arrow')}</button></div></div>
             <div class="booking-quick-days" data-quick-days role="group" aria-label="Дни недели"></div>
             <p data-calendar-note class="booking-schedule-note" aria-live="polite">Загружаем свободные дни…</p>
           </div>
-          <div class="booking-time-panel"><div class="booking-time-header"><div><h3>Выбери часы игры</h3><p data-selected-date></p></div><span class="booking-hour-step">Шаг 1 час</span></div>
+          <div class="booking-time-panel"><div class="booking-time-header"><div><h3>Часы игры</h3><p data-selected-date></p></div><span class="booking-hour-step">Барнаул · UTC+7</span></div>
             <div class="booking-slot-grid" data-slots role="group" aria-label="Свободное время"></div>
-            <div class="booking-range-selection"><div><span>Выбранное время</span><strong data-range-label>Нажми на свободный час</strong><small data-range-duration></small></div><button type="button" data-clear-range disabled>Сбросить</button></div><p class="booking-schedule-note">Время Барнаула · UTC+7</p><p class="booking-schedule-note" data-time-note aria-live="polite">Выбери день и нажми на свободные часы</p>
+            <div class="booking-range-selection" hidden><div><span>Выбранное время</span><strong data-range-label></strong><small data-range-duration></small></div><button type="button" data-clear-range disabled>Сбросить</button></div><p class="booking-schedule-note" data-time-note aria-live="polite">Выбери день и нажми на свободные часы</p>
           </div>
         </div>
       </fieldset>
@@ -75,8 +74,8 @@
         <div class="form-grid">
           <label class="field"><span>Как тебя зовут</span><input name="name" required minlength="2" maxlength="80" autocomplete="given-name" value="${escapeHtml(opts.name || '')}"></label>
           <label class="field"><span>Телефон</span><input name="phone" type="tel" required maxlength="24" autocomplete="tel" placeholder="+7 (999) 123-45-67" value="${escapeHtml(opts.phone || '')}"></label>
-          <label class="field full"><span>Email · необязательно</span><input name="email" type="email" maxlength="254" autocomplete="email"></label>
-          <label class="field full"><span>Пожелания · необязательно</span><input name="message" maxlength="500" placeholder="Количество и возраст игроков, повод, пожелания"></label>
+          <label class="field"><span>Email · необязательно</span><input name="email" type="email" maxlength="254" autocomplete="email"></label>
+          <label class="field"><span>Пожелания · необязательно</span><input name="message" maxlength="500" placeholder="Возраст игроков, повод, пожелания"></label>
         </div>
       </fieldset>
       <label class="promo-honeypot" aria-hidden="true">Ваш сайт<input name="website" tabindex="-1" autocomplete="off"></label>
@@ -85,7 +84,7 @@
         <p class="booking-savings" data-savings hidden aria-live="polite"></p><p class="muted small" data-availability aria-live="polite">Проверяем доступные услуги…</p>
         <label class="consent"><input type="checkbox" name="callback"><span>Перезвоните мне для уточнения деталей</span></label>
         <label class="consent"><input type="checkbox" name="terms" required><span>Принимаю <a href="/terms/" target="_blank" rel="noopener">пользовательское соглашение</a>, включая возрастные ограничения и правила посещения.</span></label><label class="consent"><input type="checkbox" name="consent" required><span>Согласен на обработку и передачу данных в BookNow для оформления записи${offer ? ' и использования скидки' : ''} в соответствии с <a href="/privacy/" target="_blank" rel="noopener">политикой обработки персональных данных</a>.</span></label>
-        <p class="promo-error" data-error role="alert"></p><div class="form-actions"><button class="btn" type="submit" disabled>${settings.preview ? 'Предпросмотр — запись отключена' : offer ? 'Записаться со скидкой' : 'Забронировать время'}</button></div>${settings.preview ? '<a class="booking-preview-live" href="https://za-granyu22.ru/#booking" target="_blank" rel="noopener noreferrer">Перейти к реальной записи на сайте арены</a>' : ''}
+        <p class="promo-error" data-error role="alert"></p><div class="form-actions"><button class="btn" type="submit" disabled ${settings.preview ? 'hidden' : ''}>${offer ? 'Записаться со скидкой' : 'Забронировать время'}</button>${settings.preview ? '<a class="btn booking-preview-live" href="https://za-granyu22.ru/#booking" target="_blank" rel="noopener noreferrer">Продолжить на сайте арены</a>' : ''}</div>
       </div>
     </form>`;
   }
@@ -113,7 +112,10 @@
     let busy = false, locked = false;
 
     function renderCalendar() {
-      element.querySelector('[data-week-title]').textContent = dateFormat(weekStart, {day:'numeric',month:'short'}) + ' — ' + dateFormat(offsetDate(weekStart,6), {day:'numeric',month:'short',year:'numeric'});
+      const weekEnd = offsetDate(weekStart, 6);
+      const sameMonth = weekStart.slice(0, 7) === weekEnd.slice(0, 7);
+      const endFormat = {day:'numeric',month:sameMonth ? 'long' : 'short',...(weekEnd.slice(0,4) !== localDate().slice(0,4) ? {year:'numeric'} : {})};
+      element.querySelector('[data-week-title]').textContent = dateFormat(weekStart, sameMonth ? {day:'numeric'} : {day:'numeric',month:'short'}) + (sameMonth ? '–' : ' — ') + dateFormat(weekEnd, endFormat);
       element.querySelectorAll('[data-week]').forEach(button => {
         button.disabled = busy || locked || !service || (!service.autoAllocate && !field('stafferId').value) || calendarLoading || (Number(button.dataset.week) < 0 ? weekStart <= localDate() : offsetDate(weekStart,7) > localDate(90));
       });
@@ -122,8 +124,8 @@
       days.innerHTML = Array.from({length:7},(_,index) => {
         const day = offsetDate(weekStart,index);
         const count = calendarDates.get(day)?.count || 0;
-        const label = day === localDate() ? 'Сегодня' : day === localDate(1) ? 'Завтра' : dateFormat(day,{weekday:'short'});
-        return `<button type="button" class="booking-quick-day" data-date="${day}" aria-pressed="${day === field('date').value}" ${!service || calendarLoading || !count || day > localDate(90) ? 'disabled' : ''} aria-label="${escapeHtml(dateFormat(day,{day:'numeric',month:'long',weekday:'long'}))}: ${count ? 'есть свободное время' : 'нет сеансов'}"><span>${label}</span><strong>${escapeHtml(dateFormat(day,{day:'numeric'}))}</strong><small>${calendarLoading ? '…' : count ? 'Есть время' : 'Нет мест'}</small></button>`;
+        const label = dateFormat(day,{weekday:'short'});
+        return `<button type="button" class="booking-quick-day${day === localDate() ? ' is-today' : ''}" data-date="${day}" aria-pressed="${day === field('date').value}" ${!service || calendarLoading || !count || day > localDate(90) ? 'disabled' : ''} aria-label="${escapeHtml(dateFormat(day,{day:'numeric',month:'long',weekday:'long'}))}${day === localDate() ? ', сегодня' : ''}: ${count ? 'есть свободное время' : 'нет сеансов'}"><span>${label}</span><strong>${escapeHtml(dateFormat(day,{day:'numeric'}))}</strong></button>`;
       }).join('');
     }
 
@@ -137,7 +139,8 @@
         const classes = ['booking-slot', selected ? 'is-selected' : '', selected && at === selectedRange.startMinutes ? 'is-range-start' : '', selected && at + 60 === selectedRange.endMinutes ? 'is-range-end' : ''].join(' ');
         return `<button type="button" class="${classes}" data-slot="${time}" aria-pressed="${!!selected}" ${(!slot && !selected) || slotsLoading ? 'disabled' : ''} aria-label="${time}–${ranges.time(at+60)}${selected ? ', выбрано' : slot ? ', свободно' : ', недоступно'}"><strong>${time}</strong><small>${slot || selected ? 'до ' + ranges.time(at+60) : 'недоступно'}</small>${selected ? icon('check') : ''}</button>`;
       }).join('');
-      element.querySelector('[data-range-label]').textContent = selectedRange ? selectedRange.start + ' — ' + selectedRange.end : 'Нажми на свободный час';
+      element.querySelector('.booking-range-selection').hidden = !selectedRange;
+      element.querySelector('[data-range-label]').textContent = selectedRange ? selectedRange.start + ' — ' + selectedRange.end : '';
       element.querySelector('[data-range-duration]').textContent = selectedRange ? 'Длительность ' + durationLabel(selectedRange.durationMinutes) + (selectedRange.slotsCount > 1 ? ' · ' + selectedRange.slotsCount + ' × ' + durationLabel(selectedRange.unitMinutes) : '') : 'Соседние часы объединятся в один интервал';
       element.querySelector('[data-clear-range]').disabled = !selectedRange;
     }
@@ -161,7 +164,7 @@
           const next = result.dates.find(day => day.count && day.date <= localDate(90));
           if (next) field('date').value = next.date;
         }
-        note.textContent = settings.preview ? 'Пример расписания для просмотра формы' : result.dates.some(day => day.count) ? 'Выбери дату с доступными сеансами' : 'На этой неделе свободных сеансов нет. Перелистни следующую неделю';
+        note.textContent = result.dates.some(day => day.count) ? '' : 'На этой неделе свободных сеансов нет. Перелистни следующую неделю';
       } catch (failure) {
         if (version === calendarGeneration && element.isConnected) note.textContent = failure.message;
       } finally {
@@ -207,8 +210,8 @@
         slots = result.slots.filter(slot => /^(?:[01]\d|2[0-3]):00$/.test(slot.start));
         calendarDates.set(field('date').value, {date:field('date').value,count:slots.length});
         renderCalendar();
-        note.textContent = slots.length ? (service.duration > 60 ? 'Один сеанс этого тарифа — ' + durationLabel(service.duration) + '. Он выделится целиком; соседние сеансы можно объединить.' : 'Нажимай на соседние часы, чтобы продлить игру. Повторное нажатие сокращает интервал.') : 'На эту дату нет свободных сеансов. Выбери другую дату';
-        availability.textContent = settings.preview ? 'Пример расписания. Реальные свободные сеансы — на сайте арены.' : slots.length ? 'Свободное время подтверждено BookNow · начало каждый час' : 'Выберите другую дату или услугу';
+        note.textContent = slots.length ? (service.duration > 60 ? 'Сеанс ' + durationLabel(service.duration) + ' выделится целиком. Соседние сеансы можно объединить.' : 'Выбери час начала. Нажми соседний час, чтобы продлить игру.') : 'На эту дату нет свободных сеансов. Выбери другую дату';
+        availability.textContent = settings.preview ? 'Расписание для ознакомления. Свободное время и запись — на сайте арены.' : slots.length ? 'Свободное время подтверждено BookNow' : 'Выберите другую дату или услугу';
       } catch (failure) {
         if (version === slotGeneration && element.isConnected) {note.textContent = failure.message; availability.textContent = 'Не удалось обновить расписание. Выбери дату ещё раз';}
       } finally {
@@ -301,7 +304,7 @@
     });
     element.addEventListener('submit', async event => {
       event.preventDefault();
-      if (settings.preview === true) {error.textContent = 'Предпросмотр не создаёт записей. Для бронирования перейди на сайт арены.'; return;}
+      if (settings.preview === true) {error.textContent = 'Для оформления записи перейди на сайт арены.'; return;}
       if (busy || locked || !element.reportValidity()) return;
       if (!ranges.rangeFor(slots,field('time').value,Number(field('slotsCount').value))) {error.textContent = 'Выберите свободное время в календаре'; return;}
       busy = true;

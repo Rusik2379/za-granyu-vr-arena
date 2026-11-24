@@ -271,7 +271,8 @@ body{font-size:16px;--muted:#a8afbf}
 .booking-modal .modal-intro{font-size:15px;line-height:1.6;margin-bottom:18px}
 .booking-modal .booking-discount{padding:12px 14px;margin:0 0 18px;border-radius:6px}
 .booking-modal .booking-discount-heading{gap:10px}
-.booking-modal .booking-discount-icon{width:36px;height:36px;border-radius:6px}
+.booknow-form .booking-discount-icon{width:40px;height:40px;border-radius:10px;border:1px solid #ff647b55;background:linear-gradient(145deg,#492333,#241624);box-shadow:inset 0 1px 0 #ffffff0a;display:grid;place-items:center;flex-shrink:0}
+.booknow-form .booking-discount-icon .site-icon{width:28px;height:28px;display:block}
 .booking-modal .booking-discount strong{font-size:19px}
 .booking-modal .booking-discount-heading div>span{font-size:12px;margin-top:2px}
 .booking-modal .booking-discount p{font-size:13px;line-height:1.6;margin-top:8px}

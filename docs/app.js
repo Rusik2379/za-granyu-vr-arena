@@ -13,6 +13,7 @@ const icons={
   move:'<path d="M12 3v18M3 12h18M8 7l4-4 4 4M8 17l4 4 4-4M7 8l-4 4 4 4m10-8 4 4-4 4"/>',
   target:'<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/>',
   gift:'<path d="M3 8h18v5H3zM5 13v8h14v-8M12 8v13"/><path d="M12 8C4 9 4 2 8 3c2 1 4 5 4 5s2-4 4-5c4-1 4 6-4 5Z"/>',
+  giftBonus:'<path d="M12 7H8.5A2.5 2.5 0 1 1 11 4.5L12 7Zm0 0h3.5A2.5 2.5 0 1 0 13 4.5L12 7Z" stroke="#ffd7de" stroke-width="1.8"/><rect x="4" y="10" width="16" height="11" rx="2" fill="#ff4055" stroke="none"/><path d="M6 11h12v1H6z" fill="#b91532" stroke="none"/><rect x="3" y="7" width="18" height="4" rx="1.2" fill="#ff7a8b" stroke="none"/><path d="M11 7h2v14h-2z" fill="#fff1f4" stroke="none"/>',
   shield:'<path d="m12 3 8 4v5c0 5-8 9-8 9s-8-4-8-9V7z"/><path d="m8 12 3 3 5-6"/>',
   clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   pin:'<path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2"/>',

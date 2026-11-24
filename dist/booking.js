@@ -46,7 +46,7 @@
     queueMicrotask(() => mount(document.getElementById(id), opts));
     const offer = opts.promo;
     return `<form id="${id}" class="booking-form booknow-form">
-      ${offer ? `<div class="booking-discount"><div class="booking-discount-heading"><span class="booking-discount-icon">${icon('gift')}</span><div><strong>Твоя скидка −${escapeHtml(offer.discountPercent)}%</strong><span>На выбранную бронь · до ${escapeHtml(new Date(offer.expiresAt).toLocaleDateString('ru-RU', {timeZone: 'Asia/Barnaul'}))}</span></div></div><p>Скидка учтена в расчёте. Администратор применит её к заказу при подтверждении записи.</p></div>` : ''}
+      ${offer ? `<div class="booking-discount"><div class="booking-discount-heading"><span class="booking-discount-icon">${icon('giftBonus')}</span><div><strong>Твоя скидка −${escapeHtml(offer.discountPercent)}%</strong><span>На выбранную бронь · до ${escapeHtml(new Date(offer.expiresAt).toLocaleDateString('ru-RU', {timeZone: 'Asia/Barnaul'}))}</span></div></div><p>Скидка учтена в расчёте. Администратор применит её к заказу при подтверждении записи.</p></div>` : ''}
       <fieldset class="booking-fields booking-format-fields"><legend class="form-section-title">Формат посещения</legend>
         <div class="form-grid">
           <label class="field full" data-location><span>Локация</span><select name="locationId" required disabled>${option('', 'Загружаем форматы…')}</select></label>

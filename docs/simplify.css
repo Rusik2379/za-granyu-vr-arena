@@ -42,6 +42,9 @@ body{font-size:16px;--muted:#a8afbf}
 .footer-qr:hover .footer-qr-image{border-color:#ff6573}
 .events-section{padding-top:56px;padding-bottom:54px}
 .event-card{min-height:310px;padding:32px}
+.event-card:first-child .event-bg{background-image:url('/za-granyu-vr-arena/assets/birthday-party.png');background-position:50% 76%}
+.event-card:last-child .event-bg{background-image:url('/za-granyu-vr-arena/assets/corporate-team.png');background-position:50% 72%}
+.event-card:before{background:linear-gradient(90deg,#090c16ed,#090c16ba 45%,#090c1626)}
 .event-card h3{font-size:clamp(25px,2.4vw,34px);max-width:430px}
 .event-card p{max-width:360px;font-size:16px;line-height:1.7}
 .event-card .text-link{font-size:15px}

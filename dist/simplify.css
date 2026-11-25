@@ -93,6 +93,7 @@ body{font-size:16px;--muted:#a8afbf}
 .package-included .package-summary{margin-top:10px;font-size:15px;line-height:1.7;color:#bdc7d9}
 .package-included ul{font-size:15px;line-height:1.8;max-width:850px;padding-left:20px;margin-block:10px 0}
 .included h3{font-size:22px}
+.included-photos .included>img{height:auto;aspect-ratio:2/3;object-fit:contain;background:#080a10;border:1px solid #242a38;border-radius:4px}
 .included p,.included-photos .included p{font-size:16px;line-height:1.75}
 .timeline-item h3{font-size:21px;line-height:1.4}
 .timeline-item p{font-size:16px;line-height:1.75}

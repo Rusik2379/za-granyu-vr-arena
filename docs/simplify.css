@@ -130,7 +130,9 @@ body{font-size:16px;--muted:#a8afbf}
 .prices-hero h1{font-size:clamp(36px,5vw,64px)}
 .prices-hero p{font-size:18px;margin-block:22px 24px;max-width:620px}
 .inner-hero .hero-sub{font-size:18px;max-width:520px;line-height:1.75}
+.inner-hero.corporate .hero-art{background-image:url('/za-granyu-vr-arena/assets/corporate-battle.png');background-position:50% 68%}
 .inner-hero .hero-badges span{font-size:14px}
+@media(max-width:640px){.inner-hero.corporate .hero-art{inset:auto 0 0;height:auto;aspect-ratio:4/3;background-size:cover;background-position:center bottom;mask-image:linear-gradient(to bottom,transparent,#000 32px)}}
 @media(max-width:1200px){.header-contact{display:none}.header-socials{margin-left:auto}.desktop-nav{margin-inline:auto}.tariff-table thead th{padding:18px 12px}.tariff-table tbody th,.tariff-table td{padding:24px 12px}.tariff-name h3{font-size:19px}.tariff-price{font-size:21px}.tariff-name{gap:10px}.tariff-name>.site-icon{width:23px;height:23px}}
 @media(max-width:1000px){.header-socials{margin-left:auto}.header-phone{margin-left:0}.header .brand img{width:190px}.header-inner{gap:12px}.tariff-table thead th{font-size:13px}.tariff-name>.site-icon{display:none}.tariff-name h3{font-size:18px}.tariff-price{font-size:19px}.tariff-includes{font-size:14px}.tariff-action .btn{font-size:13px;padding-inline:12px}.contact-inner{gap:24px}.section-intro{font-size:16px}.price-grid-event .price-card{padding:22px}.price-grid-event .price-card h3{font-size:24px;min-height:60px}.footer-main{grid-template-columns:1fr 1fr;gap:32px}.footer-about{grid-column:auto}}
 @media(max-width:760px){

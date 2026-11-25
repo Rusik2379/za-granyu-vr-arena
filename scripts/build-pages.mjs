@@ -2,6 +2,7 @@ import { mkdir, readdir, readFile, writeFile, copyFile } from 'node:fs/promises'
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { buildStyles } from './build-styles.mjs';
 
 const root = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
 const source = path.join(root, 'dist');
@@ -28,7 +29,9 @@ async function build(directory, relative = '') {
       if (name === 'booknow-config.js') text = "'use strict';\nwindow.ZG_BOOKING_CONFIG=Object.freeze({enabled:true,preview:true,apiBase:'/api/booking'});\n";
       if (name.endsWith('.html')) text = text.replace('<script src="/booking.js" defer></script>', '<script src="/booking-preview.js" defer></script>\n  <script src="/booking.js" defer></script>');
       // HTML attributes also occur inside the application's template strings.
-      text = text.replace(/\b(href|src)=(['"])\/(?!\/)/g, (_match, attr, quote) => `${attr}=${quote}${base}`);
+      text = text.replace(/\b(href|src|poster)=(['"])\/(?!\/)/g, (_match, attr, quote) => `${attr}=${quote}${base}`);
+      text = text.replace(/\b(srcset|imagesrcset)=(['"])(.*?)\2/g, (_match, attr, quote, value) =>
+        `${attr}=${quote}${value.replace(/(^|,\s*)\/(?!\/)/g, '$1' + base)}${quote}`);
       if (name === 'app.js') {
         text = text.replace("'use strict';", `'use strict';\nconst SITE_BASE = ${JSON.stringify(prefix)};`);
         text = text.replace('location.pathname.replace', 'location.pathname.slice(SITE_BASE.length).replace');
@@ -45,6 +48,7 @@ async function build(directory, relative = '') {
   }
 }
 
+await buildStyles();
 await mkdir(output, { recursive: true });
 await build(source);
 // Pages caches assets; content versions make a normal refresh load the current UI.

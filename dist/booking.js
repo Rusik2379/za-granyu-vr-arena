@@ -7,7 +7,7 @@
   let catalogPromise;
   let sectionObserver;
   const ranges = window.ZGBookingRange;
-  const serviceLabel = item => ({'Одиночная игра':'Игра · 1 час','Закрытое мероприятие':'Команда · 1 час','День за гранью':'Праздник базовый · 2 часа','Своя вселенная':'Праздник максимум · 3 часа'}[item.name] || item.name);
+  const serviceLabel = item => ({'Одиночная игра':'Одиночная игра · 1 час','Закрытое мероприятие':'Команда · 1 час','День за гранью':'Праздник базовый · 2 часа','Своя вселенная':'Праздник максимум · 3 часа'}[item.name] || item.name);
   const visibleServices = location => {
     const order = ['Одиночная игра','Закрытое мероприятие','День за гранью','Своя вселенная'];
     const rank = item => {const index = order.indexOf(item.name); return index < 0 ? order.length : index;};

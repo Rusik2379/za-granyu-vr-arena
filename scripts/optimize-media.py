@@ -26,6 +26,9 @@ for name in ['birthday-party', 'corporate-team', 'corporate-battle']:
     webp(source, 1448)
     webp(source, 768, suffix='-768')
 
+webp(ASSETS / 'home-neon.png', 1672)
+webp(ASSETS / 'home-neon.png', 768, suffix='-768')
+
 for source in (ASSETS / 'birthday').glob('*.png'):
     webp(source, 900, quality=88)
     webp(source, 450, quality=88, suffix='-450')

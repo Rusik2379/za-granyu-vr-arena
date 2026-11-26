@@ -560,7 +560,13 @@ body{font-size:16px;--muted:#a8afbf}
 .footer-about p{font-size:16px;max-width:310px}
 .footer-links a{font-size:16px}
 .footer-legal{font-size:14px}
-.footer-main{grid-template-columns:1.05fr .7fr 1fr 180px;gap:32px}
+.footer-main{grid-template-columns:1fr .7fr 1.35fr 180px;gap:32px}
+.venue-address{white-space:nowrap}
+.footer-contacts .venue-address{font-size:clamp(14px,1.35vw,16px)}
+.inner-hero.corporate .hero-sub{max-width:620px}
+@media(max-width:1000px){.footer-contacts .venue-address{font-size:16px}}
+@media(max-width:640px){.footer-contacts .venue-address,.contact-info .venue-address{font-size:clamp(14px,4.1vw,16px)}}
+@media(max-width:340px){.venue-address{white-space:normal}}
 .footer-qr{display:flex;flex-direction:column;align-items:flex-start;gap:10px;align-self:start;max-width:180px}
 .footer-qr-image{display:block;padding:8px;background:#fff;border-radius:8px;border:1px solid #fff}
 .footer-qr-image img{display:block;width:160px;height:160px;object-fit:contain}

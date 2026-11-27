@@ -33,6 +33,7 @@
     if (!selected) return rangeFor(slots,clicked);
     const at = minutes(clicked), first = selected.startMinutes, last = selected.endMinutes, unit = selected.unitMinutes;
     if (at >= first && at < last) {
+      if ((at - first) % unit !== 0) return rangeFor(slots,clicked);
       if (selected.slotsCount === 1) return null;
       const index = Math.floor((at - first) / unit);
       if (index === 0) return rangeFor(slots,time(first + unit),selected.slotsCount - 1);

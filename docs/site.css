@@ -825,6 +825,36 @@ body.locked .mobile-actions{display:none}.mobile-nav.open{bottom:0;padding-botto
 .promo-details .promo-result:empty,.promo-details .promo-error:empty{display:none}
 .promo-details .promo-result p{margin-block:10px;line-height:1.6}
 .promo-details .promo-discount{font-size:64px;margin-bottom:8px}
+.story-footer{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:stretch;gap:12px}
+.story-footer>.btn{min-height:54px;margin:0}
+.story-navigation{display:flex;align-items:stretch;gap:8px}
+.story-navigation .icon-btn{width:54px;height:auto;min-height:54px;margin:0;flex-shrink:0}
+.story-navigation .icon-btn:hover{border-color:var(--red);background:#ff303d12}
+.booking-confirmation{max-width:650px;margin-inline:auto;padding:12px 0;outline:none}
+.booknow-form .booking-confirmation h3{font-size:clamp(28px,4vw,38px);line-height:1.2}
+.booking-confirmation .success-icon{color:#91f0bf;border-color:#48b681;background:#48b68114;margin-bottom:20px}
+.success .booking-confirmation-intro{font-size:17px;margin:12px auto 24px}
+.booking-confirmation-visit{display:grid;gap:16px;padding:22px;border:1px solid #334257;border-radius:8px;background:#15203080;text-align:left}
+.booking-confirmation-visit span{display:block;color:var(--muted);font-size:14px;margin-bottom:5px}
+.booking-confirmation-visit strong{display:block;font-family:var(--display);font-size:clamp(20px,3vw,27px);line-height:1.4}
+.booking-confirmation-visit div:last-child strong{color:#91f0bf}
+.success .booking-confirmation-service{font-size:17px;color:#fff;margin-top:22px}
+.success.booking-confirmation>p{font-size:15px;line-height:1.7;max-width:560px}
+.booking-confirmation-details{margin-top:22px;text-align:left;font-size:14px;color:var(--muted);border:0}
+.booking-confirmation-details summary{cursor:pointer;text-align:center}
+.booking-confirmation-details code{display:block;padding:12px;overflow-wrap:anywhere;text-align:center;font-size:13px}
+.booking-minute-options{margin-top:12px}
+.booking-minute-options>span{display:block;margin-bottom:8px;color:var(--muted);font-size:14px}
+.booking-minute-options>[role=group]{display:flex;gap:7px;flex-wrap:wrap}
+.booking-minute{border:1px solid #355470;background:#122738;color:#c9e5ff;min-height:42px;min-width:66px;padding:8px 12px;font:700 14px var(--font);cursor:pointer;border-radius:4px}
+.booking-minute[aria-pressed=true]{background:var(--red);border-color:var(--red);color:#fff}
+@media(max-width:480px){
+.story-footer{gap:8px}
+.story-navigation{gap:5px}
+.story-navigation .icon-btn{width:44px;min-height:50px}
+.story-footer>.btn{min-height:50px;padding-inline:10px;font-size:12px;gap:8px}
+.booking-confirmation-visit{padding:16px;gap:14px}
+}
 @media(max-width:740px){
 .modal-overlay:has(.booking-modal){padding:8px}
 .booking-modal{padding:20px 12px;max-height:calc(100dvh - 16px)}

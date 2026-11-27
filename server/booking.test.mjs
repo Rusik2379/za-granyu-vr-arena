@@ -204,21 +204,35 @@ test('calendar reflects free seats, rejects impossible dates and removes elapsed
   assert.equal(f.calls.length, 0);
 });
 
-test('only hourly starts are displayed, counted and accepted for a new booking', async t => {
+test('minute-based starts remain available and bookable, including today', async t => {
   const f = setup(t), original = f.client.request;
   f.client.request = async (path, body) => {
     if (path.includes('/time-slots?')) return {timezone: 'Asia/Barnaul', currency: 'RUB',
       dates: [{date: '2026-11-11', slots: ['12:00', '12:15', '12:30', '12:45', '13:00', '25:00']
-        .map(start => ({start, end: '14:00', quantity: 1, price: 120000, price_formatted: '1 200,00 ₽'}))},
+        .map(start => ({start, end: ranges.time(ranges.minutes(start)+60), quantity: 1, price: 120000, price_formatted: '1 200,00 ₽'}))},
         {date: '2026-11-12', slots: [{start: '12:15', end: '13:15', quantity: 1}]}]};
     return original(path, body);
   };
-  assert.deepEqual((await f.bookings.slots(f.input())).slots.map(slot => slot.start), ['12:00', '13:00']);
+  f.advance(86400000 + 5 * 3600000 + 5 * 60000); // 12:05 on the day of the visit.
+  assert.deepEqual((await f.bookings.slots(f.input())).slots.map(slot => slot.start), ['12:15','12:30','12:45','13:00']);
   assert.deepEqual((await f.bookings.calendar(f.input())).dates,
-    [{date: '2026-11-11', count: 2}, {date: '2026-11-12', count: 0}]);
-  await assert.rejects(f.bookings.book({...f.input(), time: '12:15'}), {code: 'SLOT'});
-  assert.equal(f.calls.length, 0);
-  assert.equal((await f.bookings.slots(f.input())).stepMinutes, 60);
+    [{date: '2026-11-11', count: 4}, {date: '2026-11-12', count: 1}]);
+  await assert.rejects(f.bookings.book({...f.input(), time: '12:00'}), {code: 'SLOT'});
+  const result=await f.bookings.book({...f.input(), time: '12:15'});
+  assert.equal(result.start,'2026-11-11T05:15:00Z');
+  assert.equal(result.end,'2026-11-11T06:15:00Z');
+  assert.equal(f.calls.length, 1);
+});
+
+test('overlapping minute-based starts switch the selection and adjacent hours extend it', () => {
+  const slots=['14:50','15:05','15:50','16:50'].map(start=>({start,end:ranges.time(ranges.minutes(start)+60),quantity:1,priceMinor:120000}));
+  const first=ranges.choose(slots,null,'14:50');
+  const moved=ranges.choose(slots,first,'15:05');
+  assert.equal(moved.start,'15:05');assert.equal(moved.slotsCount,1);
+  const extended=ranges.choose(slots,first,'15:50');
+  assert.equal(extended.end,'16:50');assert.equal(extended.slotsCount,2);
+  assert.equal(extended.priceMinor,240000);
+  assert.equal(ranges.choose(slots,moved,'15:05'),null);
 });
 
 test('a month calendar requests a bounded range and clips the single-day response', async t => {

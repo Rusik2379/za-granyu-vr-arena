@@ -3,9 +3,9 @@
 (() => {
   const services = [
     {id:'preview-game',name:'Одиночная игра',duration:60,rates:[900,1200]},
-    {id:'preview-team',name:'Закрытое мероприятие',duration:60,rates:[8000,11000]},
-    {id:'preview-basic',name:'День за гранью',duration:120,rates:[12000,16000]},
-    {id:'preview-max',name:'Своя вселенная',duration:180,rates:[17000,23000]}
+    {id:'preview-team',name:'Командная игра',duration:60,rates:[8000,11000]},
+    {id:'preview-basic',name:'Праздник базовый',duration:120,rates:[12000,16000]},
+    {id:'preview-max',name:'Праздник максимум',duration:180,rates:[17000,23000]}
   ];
   const time = minutes => String(Math.floor(minutes/60)).padStart(2,'0')+':'+String(minutes%60).padStart(2,'0');
   const offset = (date,days) => new Date(Date.parse(date+'T12:00:00Z')+days*86400000).toISOString().slice(0,10);

@@ -7,10 +7,17 @@
   let catalogPromise;
   let sectionObserver;
   const ranges = window.ZGBookingRange;
-  const serviceLabel = item => ({'Одиночная игра':'Одиночная игра · 1 час','Закрытое мероприятие':'Команда · 1 час','День за гранью':'Праздник базовый · 2 часа','Своя вселенная':'Праздник максимум · 3 часа'}[item.name] || item.name);
+  const serviceRoles = {
+    game:{ids:['999bae42-8aa2-42d1-9bb7-8155ef9105b9'],names:['Одиночная игра']},
+    team:{ids:['ff1c41de-5c8e-4c11-88a9-be52db8d7eac','4dd0272d-9f03-48c4-9eb6-2b2789cb96c4'],names:['Закрытое мероприятие','Командная игра','Команда']},
+    basic:{ids:['f0ad0282-1448-4643-be3a-569016d8f093'],names:['День за гранью','Праздник базовый']},
+    maximum:{ids:['2fda9def-d548-468c-bdcd-27af0bea0ef8'],names:['Своя вселенная','Праздник максимум']}
+  };
+  const serviceRole = item => Object.keys(serviceRoles).find(role => serviceRoles[role].ids.includes(item.id) || serviceRoles[role].names.includes(item.name));
+  const serviceLabel = item => item.name + (item.duration ? ' · ' + durationLabel(item.duration) : '');
   const visibleServices = location => {
-    const order = ['Одиночная игра','Закрытое мероприятие','День за гранью','Своя вселенная'];
-    const rank = item => {const index = order.indexOf(item.name); return index < 0 ? order.length : index;};
+    const order = Object.keys(serviceRoles);
+    const rank = item => {const index = order.indexOf(serviceRole(item)); return index < 0 ? order.length : index;};
     return (location?.services || []).filter(item => item.name !== 'Старт праздника').sort((a,b) => rank(a)-rank(b));
   };
   const durationLabel = minutes => minutes % 60 ? minutes + ' мин.' : minutes / 60 + ' ч';
@@ -41,6 +48,22 @@
     return data;
   }
 
+  function confirmation(result) {
+    const start = new Date(result.start), end = result.end ? new Date(result.end) : null;
+    const date = start.toLocaleDateString('ru-RU', {timeZone:result.timezone,weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    const clock = value => value.toLocaleTimeString('ru-RU',{timeZone:result.timezone,hour:'2-digit',minute:'2-digit'});
+    return `<div class="success booking-confirmation" tabindex="-1" role="status">
+      <div class="success-icon">${icon('check')}</div><h3>Вы записаны!</h3><p class="booking-confirmation-intro">Ждём вас на арене «За Гранью»</p>
+      <div class="booking-confirmation-visit"><div><span>Дата игры</span><strong>${escapeHtml(date)}</strong></div><div><span>Время игры · Барнаул</span><strong>${escapeHtml(clock(start))}${end ? ' — '+escapeHtml(clock(end)) : ''}</strong></div></div>
+      <p class="booking-confirmation-service">${escapeHtml(result.service)}${result.durationMinutes ? ' · '+escapeHtml(durationLabel(result.durationMinutes)) : ''}</p>
+      <p>Приходите за 15 минут до начала — подготовим оборудование и проведём инструктаж.</p>
+      ${result.discountPercent ? `<div class="booking-success-discount"><strong>Скидка ${escapeHtml(result.discountPercent)}% закреплена за бронью</strong>
+        ${result.quote ? `<p>Предварительно к оплате <b>${escapeHtml(result.quote.totalLabel)}</b> вместо ${escapeHtml(result.quote.baseLabel)}</p>` : ''}
+        <p>Бонус и расчёт переданы администратору. Он применит скидку к сумме заказа.</p></div>` : ''}
+      <details class="booking-confirmation-details"><summary>Номер записи</summary><code>${escapeHtml(result.id)}</code></details>
+    </div>`;
+  }
+
   function form(opts = {}) {
     const id = 'booknow-' + crypto.randomUUID();
     queueMicrotask(() => mount(document.getElementById(id), opts));
@@ -66,6 +89,7 @@
           </div>
           <div class="booking-time-panel"><div class="booking-time-header"><div><h3>Часы игры</h3><p data-selected-date></p></div><span class="booking-hour-step">Барнаул · UTC+7</span></div>
             <div class="booking-slot-grid" data-slots role="group" aria-label="Свободное время"></div>
+            <div class="booking-minute-options" data-minute-options hidden><span>Уточнить время начала</span><div role="group" aria-label="Минуты начала игры"></div></div>
             <div class="booking-range-selection" hidden><div><span>Выбранное время</span><strong data-range-label></strong><small data-range-duration></small></div><button type="button" data-clear-range disabled>Сбросить</button></div><p class="booking-schedule-note" data-time-note aria-live="polite">Выбери день и нажми на свободные часы</p>
           </div>
         </div>
@@ -132,13 +156,26 @@
     function renderSlots() {
       element.querySelector('[data-selected-date]').textContent = dateFormat(field('date').value, {weekday:'long',day:'numeric',month:'long'});
       slotsElement.setAttribute('aria-busy', String(slotsLoading));
-      const hours = [...new Set([...Array.from({length:12}, (_, index) => String(index + 10).padStart(2,'0') + ':00'), ...slots.map(slot => slot.start)])].sort();
+      const selectedHours = selectedRange ? Array.from({length: Math.ceil(selectedRange.durationMinutes/60)}, (_,index) => ranges.time(selectedRange.startMinutes + index*60)) : [];
+      const hourGroups = new Map();
+      for (const slot of slots) {
+        const hour=slot.start.slice(0,2);
+        if (!hourGroups.has(hour)) hourGroups.set(hour,[]);
+        hourGroups.get(hour).push(slot.start);
+      }
+      for (const time of selectedHours) if (!hourGroups.has(time.slice(0,2))) hourGroups.set(time.slice(0,2),[]);
+      const hours=[...hourGroups].sort(([a],[b])=>a.localeCompare(b)).map(([hour,starts]) =>
+        selectedHours.find(time=>time.startsWith(hour+':')) || starts.find(time=>selectedRange && time.slice(3)===selectedRange.start.slice(3)) || starts[0]);
       slotsElement.innerHTML = hours.map(time => {
         const slot = slots.find(item => item.start === time), at = ranges.minutes(time);
-        const selected = selectedRange && at >= selectedRange.startMinutes && at < selectedRange.endMinutes;
+        const selected = selectedRange && at >= selectedRange.startMinutes && at < selectedRange.endMinutes && (at-selectedRange.startMinutes)%60===0;
         const classes = ['booking-slot', selected ? 'is-selected' : '', selected && at === selectedRange.startMinutes ? 'is-range-start' : '', selected && at + 60 === selectedRange.endMinutes ? 'is-range-end' : ''].join(' ');
         return `<button type="button" class="${classes}" data-slot="${time}" aria-pressed="${!!selected}" ${(!slot && !selected) || slotsLoading ? 'disabled' : ''} aria-label="${time}–${ranges.time(at+60)}${selected ? ', выбрано' : slot ? ', свободно' : ', недоступно'}"><strong>${time}</strong><small>${slot || selected ? 'до ' + ranges.time(at+60) : 'недоступно'}</small>${selected ? icon('check') : ''}</button>`;
       }).join('');
+      const minuteOptions=element.querySelector('[data-minute-options]');
+      const starts=selectedRange ? slots.filter(slot=>slot.start.slice(0,2)===selectedRange.start.slice(0,2)) : [];
+      minuteOptions.hidden=starts.length<2;
+      minuteOptions.querySelector('[role=group]').innerHTML=starts.map(slot=>`<button type="button" class="booking-minute" data-minute="${slot.start}" aria-pressed="${slot.start===selectedRange?.start}" ${slotsLoading?'disabled':''}>${slot.start}</button>`).join('');
       element.querySelector('.booking-range-selection').hidden = !selectedRange;
       element.querySelector('[data-range-label]').textContent = selectedRange ? selectedRange.start + ' — ' + selectedRange.end : '';
       element.querySelector('[data-range-duration]').textContent = selectedRange ? 'Длительность ' + durationLabel(selectedRange.durationMinutes) + (selectedRange.slotsCount > 1 ? ' · ' + selectedRange.slotsCount + ' × ' + durationLabel(selectedRange.unitMinutes) : '') : 'Соседние часы объединятся в один интервал';
@@ -207,7 +244,7 @@
       try {
         const result = await api('slots?' + new URLSearchParams({locationId:location.id,serviceId:service.id,stafferId:field('stafferId').value,date:field('date').value}));
         if (version !== slotGeneration || !element.isConnected) return;
-        slots = result.slots.filter(slot => /^(?:[01]\d|2[0-3]):00$/.test(slot.start));
+        slots = result.slots.filter(slot => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(slot.start));
         calendarDates.set(field('date').value, {date:field('date').value,count:slots.length});
         renderCalendar();
         note.textContent = slots.length ? (service.duration > 60 ? 'Сеанс ' + durationLabel(service.duration) + ' выделится целиком. Соседние сеансы можно объединить.' : 'Выбери час начала. Нажми соседний час, чтобы продлить игру.') : 'На эту дату нет свободных сеансов. Выбери другую дату';
@@ -254,11 +291,10 @@
       location = locations.find(item => item.id === field('locationId').value);
       const services = visibleServices(location);
       field('serviceId').innerHTML = services.map(item => option(item.id,serviceLabel(item))).join('');
-      const preferred = opts.format === 'private' ? 'Закрытое мероприятие'
-        : ['birthday','corporate'].includes(opts.format) ? (Number(opts.duration) === 180 ? 'Своя вселенная' : 'День за гранью')
-        : 'Одиночная игра';
-      const packageName = {'Игра':'Одиночная игра','Команда':'Закрытое мероприятие','Праздник базовый':'День за гранью','Праздник максимум':'Своя вселенная'}[opts.package] || opts.package;
-      const selected = services.find(item => item.name === packageName) || services.find(item => item.name === preferred);
+      const preferred = opts.format === 'private' ? 'team'
+        : ['birthday','corporate'].includes(opts.format) ? (Number(opts.duration) === 180 ? 'maximum' : 'basic') : 'game';
+      const packageRole = {'Игра':'game','Одиночная игра':'game','Команда':'team','Праздник базовый':'basic','Праздник максимум':'maximum'}[opts.package];
+      const selected = services.find(item => serviceRole(item) === (packageRole || preferred));
       if (selected) field('serviceId').value = selected.id;
       field('serviceId').disabled = !services.length;
       return loadService();
@@ -279,7 +315,7 @@
       }
     });
     element.addEventListener('click', event => {
-      const button = event.target.closest('[data-date],[data-slot],[data-week],[data-clear-range]');
+      const button = event.target.closest('[data-date],[data-slot],[data-minute],[data-week],[data-clear-range]');
       if (!button || button.disabled || busy || locked) return;
       error.textContent = '';
       if (button.hasAttribute('data-week')) {
@@ -294,6 +330,11 @@
       } else if (button.hasAttribute('data-date')) {
         field('date').value = button.dataset.date; renderCalendar();
         void loadSlots();
+      } else if (button.hasAttribute('data-minute')) {
+        selectedRange=ranges.rangeFor(slots,button.dataset.minute,selectedRange?.slotsCount||1)||ranges.rangeFor(slots,button.dataset.minute);
+        field('time').value=selectedRange?.start||'';field('slotsCount').value=String(selectedRange?.slotsCount||1);
+        renderSlots();updateQuantity();
+        element.querySelector('[data-minute="'+button.dataset.minute+'"]')?.focus({preventScroll:true});
       } else {
         const focused = document.activeElement === button, time = button.dataset.slot;
         selectedRange = button.hasAttribute('data-clear-range') ? null : ranges.choose(slots,selectedRange,time);
@@ -319,13 +360,9 @@
         const result = await api('create', {...data, requestId, clientToken: clientToken(),
           consent: true, callback: field('callback').checked, quantity: Number(data.quantity || 1), slotsCount:Number(data.slotsCount || 1), terms:data.terms === 'on', promoId: opts.promo?.id || null});
         if (!element.isConnected) return;
-        element.innerHTML = `<div class="success"><div class="success-icon">${icon('check')}</div>
-          <h3>Запись оформлена в BookNow</h3><p>${escapeHtml(serviceLabel({name:result.service}))}</p>
-          <p>${escapeHtml(new Date(result.start).toLocaleString('ru-RU', {timeZone: result.timezone, dateStyle: 'long', timeStyle: 'short'}))}</p>
-          ${result.end ? `<p>До ${escapeHtml(new Date(result.end).toLocaleTimeString('ru-RU',{timeZone:result.timezone,hour:'2-digit',minute:'2-digit'}))} · ${escapeHtml(durationLabel(result.durationMinutes))}</p>` : ''}<p>${escapeHtml(result.status)}</p><span class="reference">${escapeHtml(result.id)}</span>
-          ${result.discountPercent ? `<div class="booking-success-discount"><strong>Скидка ${escapeHtml(result.discountPercent)}% закреплена за бронью</strong>
-            ${result.quote ? `<p>Предварительно к оплате <b>${escapeHtml(result.quote.totalLabel)}</b> вместо ${escapeHtml(result.quote.baseLabel)}</p>` : ''}
-            <p>Бонус и расчёт переданы администратору. Он применит скидку к сумме заказа в BookNow.</p></div>` : ''}</div>`;
+        element.innerHTML = confirmation(result);
+        element.querySelector('.booking-confirmation').focus({preventScroll:true});
+        element.querySelector('.booking-confirmation').scrollIntoView({behavior:'smooth',block:'nearest'});
         locked = true;
       } catch (failure) {
         if (!element.isConnected) return;

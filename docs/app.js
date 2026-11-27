@@ -204,7 +204,7 @@ function heroSlide(dir){slide=(slide+Number(dir)+3)%3;const titles=['ВЫХОД�
 
 function closeMenu(){const nav=$('.mobile-nav');nav?.classList.remove('open');const b=$('.menu-toggle');b?.setAttribute('aria-expanded','false');b?.setAttribute('aria-label','Открыть меню');if(!$('#modal-root').hasChildNodes())document.body.classList.remove('locked');}
 document.addEventListener('click',e=>{
- const book=e.target.closest('[data-book]');if(book){closeMenu();booking({format:book.dataset.format,duration:book.dataset.duration,game:book.dataset.game,package:book.dataset.package,day:null});return;}
+ const book=e.target.closest('[data-book]');if(book){closeMenu();if($('#modal-root').hasChildNodes())closeModal();booking({format:book.dataset.format,duration:book.dataset.duration,game:book.dataset.game,package:book.dataset.package,day:null});return;}
  const filter=e.target.closest('[data-filter]');if(filter){$$('[data-filter]').forEach(b=>{b.classList.toggle('active',b===filter);b.setAttribute('aria-pressed',String(b===filter))});$('#game-grid').innerHTML=games.filter(g=>filter.dataset.filter==='all'||g.category===filter.dataset.filter).map(gameCard).join('');return;}
 
  if(e.target.closest('.mobile-nav a'))closeMenu();

@@ -631,6 +631,9 @@ body{font-size:16px;--muted:#a8afbf}
 .included p,.included-photos .included p{font-size:16px;line-height:1.75}
 .timeline-item h3{font-size:21px;line-height:1.4}
 .timeline-item p{font-size:16px;line-height:1.75}
+.timeline-item,.included{min-width:0}
+@media(max-width:850px){.timeline{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.timeline,.included-grid{grid-template-columns:minmax(0,1fr)}}
 .schedule-contact{margin-top:32px;font-size:16px}
 .faq-copy>p,.faq-list details>p{font-size:16px;line-height:1.85}
 .faq-list summary{font-size:18px;line-height:1.55}

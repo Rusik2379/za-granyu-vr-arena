@@ -52,11 +52,11 @@
   }
   function draw() {
     const preview=rules.mode==='preview';
-    modal(`<div class="promo-layout"><div class="promo-art"><div class="promo-art-topline"><span>ЗА ГРАНЬЮ / VR-АРЕНА</span><span class="promo-max">ДО −${Math.max(...rules.prizes)}%</span></div>${wheelArtwork()}<div class="promo-art-footer">${icon('gift')} Скидка на следующее посещение</div></div><div class="promo-details"><div class="eyebrow">Подарок перед игрой</div><h2 id="modal-title">КОЛЕСО<br><span>ТВОЕЙ УДАЧИ</span></h2><p class="modal-intro">Оставь имя и телефон, крути колесо и выбери время для игры со скидкой.</p><div class="promo-benefits"><span>${icon('gift')} Скидка до ${Math.max(...rules.prizes)}%</span><span>${icon('clock')} ${rules.validityDays} дней на игру</span></div><form id="promo-form"><div class="form-grid"><label class="field"><span>Твоё имя</span><input name="name" required minlength="2" maxlength="80" autocomplete="given-name" placeholder="Как тебя зовут"></label><label class="field"><span>Номер телефона</span><input name="phone" type="tel" required maxlength="24" autocomplete="tel" inputmode="tel" placeholder="+7 (999) 123-45-67"></label></div><label class="promo-honeypot" aria-hidden="true">Ваш сайт<input name="website" tabindex="-1" autocomplete="off"></label><p class="promo-error" id="promo-error" role="alert"></p><button class="btn" type="submit" id="promo-spin" disabled>Крутить колесо ${icon('arrow')}</button><p class="promo-consent-caption">Нажимая «Крутить колесо», вы принимаете <a href="/terms/" target="_blank" rel="noopener">пользовательское соглашение</a> и даёте согласие на обработку имени и телефона для участия в акции и использования скидки в соответствии с <a href="/privacy/" target="_blank" rel="noopener">политикой обработки персональных данных</a>.</p><p class="promo-rules">${preview?'На GitHub показан расчёт бонуса. Действующую скидку можно получить на сайте арены.':'Один номер участвует один раз. Администратор проверит номер при использовании скидки.'}</p></form><div id="promo-result" class="promo-result" role="status" aria-live="polite"></div></div></div>`,'wheel-modal promo-modal');
+    modal(`<div class="promo-layout"><div class="promo-art"><div class="promo-art-topline"><span>ЗА ГРАНЬЮ / VR-АРЕНА</span><span class="promo-max">ДО −${Math.max(...rules.prizes)}%</span></div>${wheelArtwork()}<div class="promo-art-footer">${icon('gift')} Скидка на следующее посещение</div></div><div class="promo-details"><div class="eyebrow">Подарок перед игрой</div><h2 id="modal-title">КОЛЕСО<br><span>ТВОЕЙ УДАЧИ</span></h2><p class="modal-intro">Оставь имя и телефон, крути колесо и выбери время для игры со скидкой.</p><div class="promo-benefits"><span>${icon('gift')} Скидка до ${Math.max(...rules.prizes)}%</span><span>${icon('clock')} ${rules.validityDays} дней на игру</span></div><form id="promo-form"><div class="form-grid"><label class="field"><span>Твоё имя</span><input name="name" required minlength="2" maxlength="80" autocomplete="given-name" placeholder="Как тебя зовут"></label><label class="field"><span>Номер телефона</span><input name="phone" type="tel" required maxlength="24" autocomplete="tel" inputmode="tel" placeholder="+7 (999) 123-45-67"></label></div><label class="promo-honeypot" aria-hidden="true">Ваш сайт<input name="website" tabindex="-1" autocomplete="off"></label><p class="promo-error" id="promo-error" role="alert"></p><button class="btn" type="submit" id="promo-spin">Крутить колесо ${icon('arrow')}</button><p class="promo-consent-caption">Нажимая «Крутить колесо», вы принимаете <a href="/terms/" target="_blank" rel="noopener">пользовательское соглашение</a> и даёте согласие на обработку имени и телефона для участия в акции и использования скидки в соответствии с <a href="/privacy/" target="_blank" rel="noopener">политикой обработки персональных данных</a>.</p><p class="promo-rules">${preview?'На GitHub показан расчёт бонуса. Действующую скидку можно получить на сайте арены.':'Один номер участвует один раз. Администратор проверит номер при использовании скидки.'}</p></form><div id="promo-result" class="promo-result" role="status" aria-live="polite"></div></div></div>`,'wheel-modal promo-modal');
     $('.promo-tab')?.setAttribute('aria-expanded','true');
     const form=$('#promo-form');
-    const validate=()=>{let valid=false;try{phoneNumber(form.elements.phone.value);const name=form.elements.name.value.trim();valid=name.length>=2&&name.length<=80&&!/[<>\x00-\x1f]/.test(name)&&!form.elements.website.value;}catch{}$('#promo-spin').disabled=!valid;};
-    form.addEventListener('input',()=>queueMicrotask(validate));form.addEventListener('change',validate);validate();
+    // Validation is shown on the fields when the visitor presses the button.
+    $('#promo-spin').disabled=false;
   }
   async function open() {
     try {rules=await loadRules();draw();}catch(error){toast(error.message);}
@@ -85,14 +85,15 @@
     if(event.target.id!=='promo-form')return;
     event.preventDefault();
     const form=event.target;
+    if(form.dataset.submitting === 'true')return;
     if(!form.reportValidity())return;
     const button=$('#promo-spin'),error=$('#promo-error');
-    button.disabled=true;error.textContent='';
+    form.dataset.submitting='true';button.disabled=true;error.textContent='';
     let result;
     try {
       const data=Object.fromEntries(new FormData(form));
       data.phone=phoneNumber(data.phone);data.name=data.name.trim();
-      if(data.name.length<2)throw Error('Укажите имя от двух символов');
+      if(data.name.length<2||data.name.length>80||/[<>\x00-\x1f]/.test(data.name))throw Error('Укажите имя от 2 до 80 символов');
       data.consent=true;data.consentVersion='wheel-v2-button';data.clientToken=clientToken();
       result=rules.mode==='preview'?await previewClaim(data):await api('claim',data);
       if(!Number.isInteger(result.sector)||result.sector<0||result.sector>=6||result.discountPercent!==rules.prizes[result.sector]||!Number.isFinite(Date.parse(result.expiresAt)))throw Error('Не удалось получить результат. Повторите запрос — бонус не изменится');
@@ -108,7 +109,7 @@
       form.closest('.promo-modal')?.classList.remove('is-spinning');
       wheel.querySelector('[data-sector="'+result.sector+'"]')?.classList.add('is-winning');
       form.hidden=true;$('#promo-result').innerHTML=resultMarkup(result);
-    } catch(failure) {if(form.isConnected){form.closest('.promo-modal')?.classList.remove('is-spinning');error.textContent=failure.message;button.disabled=false;button.textContent='Крутить колесо';}}
+    } catch(failure) {if(form.isConnected){form.dataset.submitting='false';form.closest('.promo-modal')?.classList.remove('is-spinning');error.textContent=failure.message;button.disabled=false;button.textContent='Крутить колесо';}}
   });
   document.addEventListener('click', event => {
     if(event.target.closest('[data-promo-book]') && canBook() && bookingOffer) window.ZGBooking?.open(bookingOffer);

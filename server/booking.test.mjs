@@ -25,46 +25,45 @@ function withIntervals(f, response = null) {
   };
 }
 
-test('adjacent choices extend and trim one interval without filling a distant gap', () => {
+test('choosing a different start replaces the session and never joins adjacent starts', () => {
   const slots=intervalSlots().map(slot=>({...slot,priceMinor:slot.price}));
   let chosen=ranges.choose(slots,null,'12:00');
   chosen=ranges.choose(slots,chosen,'13:00');
+  assert.deepEqual([chosen.start,chosen.end,chosen.slotsCount,chosen.durationMinutes,chosen.priceMinor],['13:00','14:00',1,60,100000]);
   chosen=ranges.choose(slots,chosen,'14:00');
-  assert.deepEqual([chosen.start,chosen.end,chosen.slotsCount,chosen.durationMinutes],['12:00','15:00',3,180]);
-  chosen=ranges.choose(slots,chosen,'14:00');assert.equal(chosen.end,'14:00');
-  chosen=ranges.choose(slots,chosen,'12:00');assert.equal(chosen.start,'13:00');
-  assert.equal(ranges.choose(slots,chosen,'13:00'),null);
-  assert.equal(ranges.rangeFor(slots.filter(slot=>slot.start!=='13:00'),'12:00',3),null);
+  assert.equal(chosen.start,'14:00');assert.equal(chosen.end,'15:00');
+  assert.equal(ranges.choose(slots,chosen,'14:00').start,'14:00');
+  assert.equal(ranges.rangeFor(slots,'12:00',2),null);
 });
 
-test('multiple adjacent hours create one native BookNow booking with the total verified quote', async t => {
-  const f=setup(t);withIntervals(f);
-  const offer=f.claim(), input={...f.input(),slotsCount:3,quantity:2,promoId:offer.id};
-  // This fixture is a collective service for the seat-capacity check.
-  const list=f.client.list;f.client.list=async path=>(await list(path)).map(row=>path.includes('/services')?{...row,is_collective:true}:row);
-  const result=await f.bookings.book(input);
-  assert.equal(f.calls.length,1);assert.equal(f.calls[0].slots_count,3);assert.equal(f.calls[0].quantity,2);
-  assert.equal(result.end,'2026-11-11T08:00:00Z');assert.equal(result.durationMinutes,180);
-  assert.deepEqual([result.quote.baseMinor,result.quote.totalMinor],[600000,558000]);
-  assert.match(f.calls[0].booking_comment,/12:00–15:00/);
-  assert.match(f.calls[0].booking_comment,/^Новый заказ с сайта\./);
-  await assert.rejects(f.bookings.book({...input,requestId:randomUUID(),slotsCount:1}),{code:'DUPLICATE'});
-  assert.equal(f.calls.length,1);
+test('one selected service books its full 1, 2 or 3 hours in one provider request', async t => {
+  for(const hours of [1,2,3]) {
+    const f=setup(t);
+    const originalList=f.client.list, originalRequest=f.client.request;
+    f.client.list=async path=>(await originalList(path)).map(row=>path.includes('/services')?{...row,duration:hours*60}:row);
+    f.client.request=async(path,body)=>path.includes('/time-slots?')
+      ? {timezone:'Asia/Barnaul',currency:'RUB',dates:[{date:'2026-11-11',slots:[{start:'12:00',end:(12+hours)+':00',quantity:5,price:hours*100000}]}]}
+      : originalRequest(path,body);
+    const input=f.input(), result=await f.bookings.book(input);
+    await f.bookings.book(input);
+    assert.equal(f.calls.length,1);assert.equal(f.calls[0].slots_count,1);
+    assert.equal(result.durationMinutes,hours*60);assert.equal(result.slotsCount,1);
+    assert.equal(result.end,'2026-11-11T'+String(5+hours).padStart(2,'0')+':00:00Z');
+    assert.equal(result.quote.baseMinor,hours*100000);
+  }
 });
 
-test('invalid ranges, a busy intervening hour, insufficient seats and missing agreement never create bookings', async t => {
+test('forged session counts, invalid capacity and missing agreement never create bookings', async t => {
   const f=setup(t);withIntervals(f);
-  for(const slotsCount of [0,13,1.5]) await assert.rejects(f.bookings.book({...f.input(),slotsCount}),{code:'RANGE'});
-  await assert.rejects(f.bookings.book({...f.input(),slotsCount:3,quantity:3}),{code:'QUANTITY'});
+  for(const slotsCount of [0,2,3,13,1.5]) await assert.rejects(f.bookings.book({...f.input(),slotsCount}),{code:'SINGLE_SESSION'});
+  await assert.rejects(f.bookings.book({...f.input(),quantity:6}),{code:'QUANTITY'});
   await assert.rejects(f.bookings.book({...f.input(),terms:false}),{code:'TERMS'});
-  const original=f.client.request;f.client.request=async(path,body)=>{const r=await original(path,body);if(path.includes('/time-slots?'))r.dates[0].slots=r.dates[0].slots.filter(slot=>slot.start!=='13:00');return r;};
-  await assert.rejects(f.bookings.book({...f.input(),slotsCount:3}),{code:'RANGE'});
   assert.equal(f.calls.length,0);
 });
 
-test('a provider response with a shortened multi-hour reservation remains uncertain and cannot be duplicated', async t => {
-  const f=setup(t);withIntervals(f,body=>({uuid:randomUUID(),end_time:'2026-11-11T06:00:00Z'}));
-  const input={...f.input(),slotsCount:2};
+test('a shortened provider reservation stays uncertain and is not submitted twice', async t => {
+  const f=setup(t);withIntervals(f,body=>({uuid:randomUUID(),end_time:'2026-11-11T05:30:00Z'}));
+  const input=f.input();
   await assert.rejects(f.bookings.book(input),{code:'UNCERTAIN'});
   await assert.rejects(f.bookings.book(input),{code:'UNCERTAIN'});
   assert.equal(f.calls.length,1);
@@ -235,15 +234,15 @@ test('only future whole-hour starts are available and bookable', async t => {
   assert.equal(f.calls.length, 1);
 });
 
-test('overlapping minute-based starts switch the selection and adjacent hours extend it', () => {
+test('overlapping or adjacent starts always replace the selected session', () => {
   const slots=['14:50','15:05','15:50','16:50'].map(start=>({start,end:ranges.time(ranges.minutes(start)+60),quantity:1,priceMinor:120000}));
   const first=ranges.choose(slots,null,'14:50');
   const moved=ranges.choose(slots,first,'15:05');
   assert.equal(moved.start,'15:05');assert.equal(moved.slotsCount,1);
-  const extended=ranges.choose(slots,first,'15:50');
-  assert.equal(extended.end,'16:50');assert.equal(extended.slotsCount,2);
-  assert.equal(extended.priceMinor,240000);
-  assert.equal(ranges.choose(slots,moved,'15:05'),null);
+  const adjacent=ranges.choose(slots,first,'15:50');
+  assert.equal(adjacent.start,'15:50');assert.equal(adjacent.end,'16:50');assert.equal(adjacent.slotsCount,1);
+  assert.equal(adjacent.priceMinor,120000);
+  assert.equal(ranges.choose(slots,moved,'15:05').start,'15:05');
 });
 
 test('a month calendar requests a bounded range and clips the single-day response', async t => {

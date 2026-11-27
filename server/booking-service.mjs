@@ -133,6 +133,7 @@ export function createBookingService({client, promo, notifications, databasePath
     if (existing) return previous(existing, ownerHash);
     if (input.consent !== true || input.website) fail(400, 'CONSENT', 'Подтвердите согласие на обработку записи');
     if (input.terms !== true) fail(400, 'TERMS', 'Подтвердите пользовательское соглашение перед бронированием');
+    if (Number(input.slotsCount ?? 1) !== 1) fail(400, 'SINGLE_SESSION', 'Можно забронировать только один сеанс выбранной услуги. Выберите одно время начала');
     const phone = normalizePhone(input.phone);
     const name = String(input.name || '').trim();
     const message = String(input.message || '').trim();
@@ -149,9 +150,9 @@ export function createBookingService({client, promo, notifications, databasePath
     const available = await slots(input);
     const slot = available.slots.find(item => item.start === input.time);
     if (!slot) fail(409, 'SLOT', 'Это время уже недоступно. Выберите другой сеанс');
-    const slotsCount = Number(input.slotsCount ?? 1);
+    const slotsCount = 1;
     const interval = bookingRange.rangeFor(available.slots, input.time, slotsCount);
-    if (!interval) fail(409, 'RANGE', 'Выбранные часы нельзя объединить. Обновите расписание и выберите соседние свободные сеансы');
+    if (!interval) fail(409, 'RANGE', 'Это время начала недоступно. Обновите расписание и выберите другой сеанс');
     const quantity = Number(input.quantity || 1);
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > Math.min(10, interval.quantity) || (!service.collective && quantity !== 1)) {
       fail(400, 'QUANTITY', 'Проверьте количество мест');
@@ -189,7 +190,7 @@ export function createBookingService({client, promo, notifications, databasePath
       const booking = response.data || response;
       if (!booking.uuid) throw new Error('Missing booking UUID');
       const expectedEnd = slotToUtc(input.date, interval.end, available.timezone);
-      if (slotsCount > 1 && booking.end_time && Date.parse(booking.end_time) !== Date.parse(expectedEnd)) throw new Error('BookNow returned a different booking interval');
+      if (booking.end_time && Date.parse(booking.end_time) !== Date.parse(expectedEnd)) throw new Error('BookNow returned a different booking interval');
       result = {id: booking.uuid, requestId: input.requestId, start: booking.start_time || reservedOn,
         end: booking.end_time || expectedEnd, slotsCount, durationMinutes:interval.durationMinutes, quantity,
         timezone: available.timezone, status: booking.status?.name || '', service: service.name,

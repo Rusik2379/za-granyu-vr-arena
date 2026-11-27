@@ -117,4 +117,7 @@ body.booking-in-view .promo-tab,body:has(.booking-modal) .promo-tab{visibility:h
 .booknow-form .booking-schedule:has([aria-busy=true]){opacity:.6}
 .booknow-form .booking-quick-day,.booknow-form .booking-week-nav{transition:background-color .18s ease,border-color .18s ease,color .18s ease,opacity .18s ease}
 .booknow-form [data-calendar-note],.booknow-form [data-time-note]{min-height:1.7em}
+.field .phone-hint{display:block;margin-top:8px;font-size:14px;line-height:1.5;color:#9fb2cc}
+.field .phone-hint.is-error{color:#ff9ea8}
+.field input[aria-invalid=true]{border-color:#ff6172}
 @media(prefers-reduced-motion:reduce){.booknow-form .booking-schedule,.booknow-form .booking-slot-grid,.booknow-form .booking-quick-day,.booknow-form .booking-week-nav{transition:none}}

@@ -5,7 +5,7 @@
     ? Number(value.slice(0,2)) * 60 + Number(value.slice(3)) : value === '24:00' ? 1440 : NaN;
   const time = value => String(Math.floor(value / 60)).padStart(2,'0') + ':' + String(value % 60).padStart(2,'0');
   function rangeFor(slots, start, count = 1) {
-    if (!Number.isInteger(count) || count < 1 || count > 12) return null;
+    if (count !== 1) return null;
     const first = slots.find(slot => slot.start === start);
     if (!first) return null;
     const begin = minutes(start);
@@ -30,17 +30,6 @@
       quantity:Math.min(...chosen.map(slot => Number(slot.quantity))), priceMinor:Number.isSafeInteger(price) ? price : null};
   }
   function choose(slots, selected, clicked) {
-    if (!selected) return rangeFor(slots,clicked);
-    const at = minutes(clicked), first = selected.startMinutes, last = selected.endMinutes, unit = selected.unitMinutes;
-    if (at >= first && at < last) {
-      if ((at - first) % unit !== 0) return rangeFor(slots,clicked);
-      if (selected.slotsCount === 1) return null;
-      const index = Math.floor((at - first) / unit);
-      if (index === 0) return rangeFor(slots,time(first + unit),selected.slotsCount - 1);
-      return rangeFor(slots,selected.start,index === selected.slotsCount - 1 ? index : index + 1);
-    }
-    if (at === last) return rangeFor(slots,selected.start,selected.slotsCount + 1) || selected;
-    if (at + unit === first) return rangeFor(slots,clicked,selected.slotsCount + 1) || selected;
     return rangeFor(slots,clicked);
   }
   const api = Object.freeze({minutes,time,rangeFor,choose});

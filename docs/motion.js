@@ -52,7 +52,7 @@
       document.querySelectorAll('.hero h1,.hero-sub,.hero-actions').forEach(element=>element.getAnimations().forEach(animation=>animation.cancel()));
     } else if(app) watch(app);
   });
-  animateHero();
+  // Render the first headline immediately; animate only intentional slide changes.
 })();
 
 // Keep the promo launcher away from the site's own booking form on every screen.

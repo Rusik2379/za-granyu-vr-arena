@@ -64,7 +64,8 @@ export function createPromoService({databasePath, secret, prizes, validityDays, 
     try {
       db.prepare(`INSERT INTO promo_leads
         (id, phone_hash, client_hash, name, phone, sector, discount_percent, expires_at, created_at, consent_version)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(id, phoneHash, clientHash, name, phone, sector, prizes[sector], time + validityDays * 86400000, time, 'wheel-v1');
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(id, phoneHash, clientHash, name, phone, sector, prizes[sector], time + validityDays * 86400000, time,
+          input.consentVersion==='wheel-v2-button' ? 'wheel-v2-button' : 'wheel-v1');
     } catch (error) {
       if (error.code?.startsWith('ERR_SQLITE') && db.prepare('SELECT id FROM promo_leads WHERE phone_hash=?').get(phoneHash)) return claim(input, ip);
       throw error;

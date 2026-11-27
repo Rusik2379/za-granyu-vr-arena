@@ -6,20 +6,23 @@ import {fileURLToPath} from 'node:url';
 import {createPromoService, PromoError} from './promo-core.mjs';
 import {createBookNowClient, BookNowError} from './booknow-client.mjs';
 import {createBookingService} from './booking-service.mjs';
+import {createBookingNotifications} from './booking-notifications.mjs';
 
 const root = fileURLToPath(new URL('../dist/', import.meta.url));
 const mime = {'.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp',
-  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.woff2': 'font/woff2', '.mp4': 'video/mp4'};
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.woff2': 'font/woff2', '.mp4': 'video/mp4', '.avif':'image/avif'};
 
 export function createSiteServer({client, databasePath, secret, origins = [], siteDirectory = root,
-  promoEnabled = false, prizes = [5, 7, 10, 5, 7, 5], validityDays = 14} = {}) {
+  promoEnabled = false, prizes = [5, 7, 10, 5, 7, 5], validityDays = 14, notificationUrl} = {}) {
   let promo;
   let bookings;
+  let notifications;
   if (client) {
     mkdirSync(dirname(databasePath), {recursive: true});
     if (promoEnabled) promo = createPromoService({databasePath, secret, prizes, validityDays});
-    bookings = createBookingService({client, promo, databasePath, secret});
+    if(notificationUrl)notifications=createBookingNotifications({databasePath,url:notificationUrl});
+    bookings = createBookingService({client, promo, notifications, databasePath, secret});
   }
   const limits = new Map();
   const staticRoot = resolve(siteDirectory);
@@ -41,8 +44,19 @@ export function createSiteServer({client, databasePath, secret, origins = [], si
         if (file !== staticRoot && !file.startsWith(staticRoot + sep)) return json(404, {message: 'Не найдено'});
         let info = await stat(file);
         if (info.isDirectory()) {file = resolve(file, 'index.html'); info = await stat(file);}
-        const headers = {'Content-Type': mime[extname(file)] || 'application/octet-stream',
+        const type=mime[extname(file)] || 'application/octet-stream';
+        let encoding;
+        const accepts=String(req.headers['accept-encoding']||'').split(',').map(part=>part.trim().split(';')).filter(parts=>!parts.slice(1).some(p=>/^q=0(?:\.0*)?$/.test(p.trim()))).map(parts=>parts[0]);
+        if(!req.headers.range && /^(text\/|application\/(?:javascript|json)|image\/svg)/.test(type)) {
+          for(const [name,suffix] of [['br','.br'],['gzip','.gz']]) {
+            if(!accepts.includes(name))continue;
+            try{const compressed=await stat(file+suffix);file+=suffix;info=compressed;encoding=name;break;}catch(error){if(error.code!=='ENOENT')throw error;}
+          }
+        }
+        const headers = {'Content-Type': type,
           'Content-Length': info.size, 'Cache-Control': 'no-cache', 'Accept-Ranges': 'bytes', 'X-Content-Type-Options': 'nosniff'};
+        if(encoding)headers['Content-Encoding']=encoding;
+        if(/^(text\/|application\/(?:javascript|json)|image\/svg)/.test(type))headers.Vary='Accept-Encoding';
         let range;
         if (req.headers.range) {
           const match = /^bytes=(\d+)-(\d*)$/.exec(req.headers.range);
@@ -118,7 +132,8 @@ export function createSiteServer({client, databasePath, secret, origins = [], si
     }
   });
   server.requestTimeout = 30000;
-  server.on('close', () => {bookings?.close(); promo?.close();});
+  server.on('listening',()=>notifications?.wake());
+  server.on('close', () => {bookings?.close(); promo?.close();notifications?.close();});
   return server;
 }
 
@@ -128,6 +143,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     client: enabled ? createBookNowClient({token: process.env.BOOKNOW_API_KEY, workspace: process.env.BOOKNOW_WORKSPACE}) : null,
     databasePath: resolve(process.env.PROMO_DB_PATH || '.data/promo.sqlite'), secret: process.env.PROMO_SECRET,
     promoEnabled: process.env.PROMO_ENABLED === 'true',
+    notificationUrl:process.env.BOOKING_NOTIFICATION_URL,
     origins: (process.env.ALLOWED_ORIGINS || 'https://za-granyu22.ru').split(',').map(value => value.trim())
   });
   const port = Number(process.env.PORT || 4180);

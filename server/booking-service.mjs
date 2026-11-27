@@ -4,6 +4,7 @@ import {normalizePhone, PromoError} from './promo-core.mjs';
 import {BookNowError} from './booknow-client.mjs';
 import {bookingQuote} from './booking-price.mjs';
 import bookingRange from '../dist/booking-range.js';
+import {bookingNotification} from './booking-notifications.mjs';
 
 const fail = (status, code, message) => { throw new PromoError(status, code, message); };
 const uuid = value => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value || '');
@@ -22,7 +23,7 @@ export function slotToUtc(date, time, timezone) {
   return new Date(instant).toISOString().replace('.000Z', 'Z');
 }
 
-export function createBookingService({client, promo, databasePath, secret, now = Date.now}) {
+export function createBookingService({client, promo, notifications, databasePath, secret, now = Date.now}) {
   const db = new DatabaseSync(databasePath);
   db.exec(`PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;
     CREATE TABLE IF NOT EXISTS site_bookings (
@@ -97,7 +98,7 @@ export function createBookingService({client, promo, databasePath, secret, now =
       dates: (result.dates || []).filter(day => day.date >= input.date && day.date <= end &&
         Date.parse(day.date + 'T00:00:00Z') <= now() + 90 * 86400000).map(day => ({date: day.date,
         slots: (day.slots || []).filter(slot => Number(slot.quantity) > 0 &&
-          /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(slot.start) && Date.parse(slotToUtc(day.date, slot.start, result.timezone)) > now())
+          /^(?:[01]\d|2[0-3]):00$/.test(slot.start) && Date.parse(slotToUtc(day.date, slot.start, result.timezone)) > now())
           .map(slot => ({start: slot.start, end: slot.end, quantity: Number(slot.quantity),
             priceMinor: service.priceHidden ? null : slot.price,
             priceLabel: service.priceHidden ? '' : slot.price_formatted}))}))};
@@ -210,7 +211,13 @@ export function createBookingService({client, promo, databasePath, secret, now =
       }
       fail(409, 'UNCERTAIN', 'Запрос отправлен, но подтверждение ещё не получено. Уточните статус у администратора. Номер запроса ' + input.requestId);
     }
-    db.prepare("UPDATE site_bookings SET state='confirmed', result=? WHERE request_id=?").run(JSON.stringify(result), input.requestId);
+    db.exec('BEGIN IMMEDIATE');
+    try {
+      db.prepare("UPDATE site_bookings SET state='confirmed', result=? WHERE request_id=?").run(JSON.stringify(result), input.requestId);
+      notifications?.enqueue(input.requestId,bookingNotification({...input,name,phone,email,guests},result),db);
+      db.exec('COMMIT');
+    }catch(error){db.exec('ROLLBACK');throw error;}
+    notifications?.wake();
     return result;
   }
   return {catalog, staffers, slots, calendar, book, close: () => db.close()};

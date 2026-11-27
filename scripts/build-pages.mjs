@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { buildStyles } from './build-styles.mjs';
+import { buildTransfer } from './build-transfer.mjs';
 
 const root = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
 const source = path.join(root, 'dist');
@@ -23,6 +24,7 @@ async function build(directory, relative = '') {
       await build(from, name);
       continue;
     }
+    if (/\.(br|gz)$/.test(name)) continue;
     if (['.html', '.css', '.js'].includes(path.extname(name))) {
       let text = await readFile(from, 'utf8');
       // Show the complete form in review builds without contacting the live CRM.
@@ -64,4 +66,5 @@ for (const file of htmlFiles) {
   await writeFile(file, html, 'utf8');
 }
 await writeFile(path.join(output, '.nojekyll'), '');
+await buildTransfer();
 console.log(`GitHub Pages: ${count} files in docs/, base ${base}`);

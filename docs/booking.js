@@ -66,7 +66,18 @@
 
   function form(opts = {}) {
     const id = 'booknow-' + crypto.randomUUID();
-    queueMicrotask(() => mount(document.getElementById(id), opts));
+    queueMicrotask(() => {
+      const element=document.getElementById(id);
+      if(!element)return;
+      if(!element.closest('.booking-section')||!('IntersectionObserver' in window)){void mount(element,opts);return;}
+      let started=false, observer;
+      const select=event=>{Object.assign(opts,event.detail);start();};
+      const start=()=>{if(started)return;started=true;observer?.disconnect();element.removeEventListener('zg:select-format',select);void mount(element,opts);};
+      element.addEventListener('zg:select-format',select);
+      element.addEventListener('focusin',start,{once:true});
+      observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting))start();},{rootMargin:'450px'});
+      observer.observe(element);
+    });
     const offer = opts.promo;
     return `<form id="${id}" class="booking-form booknow-form">
       ${offer ? `<div class="booking-discount"><div class="booking-discount-heading"><span class="booking-discount-icon">${icon('giftBonus')}</span><div><strong>Твоя скидка −${escapeHtml(offer.discountPercent)}%</strong><span>На выбранную бронь · до ${escapeHtml(new Date(offer.expiresAt).toLocaleDateString('ru-RU', {timeZone: 'Asia/Barnaul'}))}</span></div></div><p>Скидка учтена в расчёте. Администратор применит её к заказу при подтверждении записи.</p></div>` : ''}
@@ -89,7 +100,6 @@
           </div>
           <div class="booking-time-panel"><div class="booking-time-header"><div><h3>Часы игры</h3><p data-selected-date></p></div><span class="booking-hour-step">Барнаул · UTC+7</span></div>
             <div class="booking-slot-grid" data-slots role="group" aria-label="Свободное время"></div>
-            <div class="booking-minute-options" data-minute-options hidden><span>Уточнить время начала</span><div role="group" aria-label="Минуты начала игры"></div></div>
             <div class="booking-range-selection" hidden><div><span>Выбранное время</span><strong data-range-label></strong><small data-range-duration></small></div><button type="button" data-clear-range disabled>Сбросить</button></div><p class="booking-schedule-note" data-time-note aria-live="polite">Выбери день и нажми на свободные часы</p>
           </div>
         </div>
@@ -172,10 +182,6 @@
         const classes = ['booking-slot', selected ? 'is-selected' : '', selected && at === selectedRange.startMinutes ? 'is-range-start' : '', selected && at + 60 === selectedRange.endMinutes ? 'is-range-end' : ''].join(' ');
         return `<button type="button" class="${classes}" data-slot="${time}" aria-pressed="${!!selected}" ${(!slot && !selected) || slotsLoading ? 'disabled' : ''} aria-label="${time}–${ranges.time(at+60)}${selected ? ', выбрано' : slot ? ', свободно' : ', недоступно'}"><strong>${time}</strong><small>${slot || selected ? 'до ' + ranges.time(at+60) : 'недоступно'}</small>${selected ? icon('check') : ''}</button>`;
       }).join('');
-      const minuteOptions=element.querySelector('[data-minute-options]');
-      const starts=selectedRange ? slots.filter(slot=>slot.start.slice(0,2)===selectedRange.start.slice(0,2)) : [];
-      minuteOptions.hidden=starts.length<2;
-      minuteOptions.querySelector('[role=group]').innerHTML=starts.map(slot=>`<button type="button" class="booking-minute" data-minute="${slot.start}" aria-pressed="${slot.start===selectedRange?.start}" ${slotsLoading?'disabled':''}>${slot.start}</button>`).join('');
       element.querySelector('.booking-range-selection').hidden = !selectedRange;
       element.querySelector('[data-range-label]').textContent = selectedRange ? selectedRange.start + ' — ' + selectedRange.end : '';
       element.querySelector('[data-range-duration]').textContent = selectedRange ? 'Длительность ' + durationLabel(selectedRange.durationMinutes) + (selectedRange.slotsCount > 1 ? ' · ' + selectedRange.slotsCount + ' × ' + durationLabel(selectedRange.unitMinutes) : '') : 'Соседние часы объединятся в один интервал';
@@ -221,7 +227,10 @@
         total.textContent = format(base - reduction);
         if (discount) {before.textContent = format(base); before.hidden = false; savings.textContent = `Экономия ${format(reduction)} · скидка ${discount}% из колеса`; savings.hidden = false;}
       } else total.textContent = 'Уточняется у администратора';
-      submit.disabled = settings.preview === true || busy || locked || slotsLoading;
+      const name=field('name').value.trim(), phone=field('phone').value.replace(/\D/g,'').replace(/^8/,'7');
+      const validContact=name.length>=2 && name.length<=80 && !/[<>\x00-\x1f]/.test(name) && /^79\d{9}$/.test(phone);
+      const validFields=[...element.elements].every(control=>control.disabled || !control.willValidate || control.validity.valid);
+      submit.disabled = settings.preview === true || busy || locked || slotsLoading || calendarLoading || !validContact || !validFields || !field('terms').checked || !field('consent').checked || !!field('website').value;
     }
 
     function updateQuantity() {
@@ -244,7 +253,7 @@
       try {
         const result = await api('slots?' + new URLSearchParams({locationId:location.id,serviceId:service.id,stafferId:field('stafferId').value,date:field('date').value}));
         if (version !== slotGeneration || !element.isConnected) return;
-        slots = result.slots.filter(slot => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(slot.start));
+        slots = result.slots.filter(slot => /^(?:[01]\d|2[0-3]):00$/.test(slot.start));
         calendarDates.set(field('date').value, {date:field('date').value,count:slots.length});
         renderCalendar();
         note.textContent = slots.length ? (service.duration > 60 ? 'Сеанс ' + durationLabel(service.duration) + ' выделится целиком. Соседние сеансы можно объединить.' : 'Выбери час начала. Нажми соседний час, чтобы продлить игру.') : 'На эту дату нет свободных сеансов. Выбери другую дату';
@@ -313,9 +322,11 @@
         case 'stafferId': {const version = ++generation; ++slotGeneration; slots = []; selectedRange = null; field('slotsCount').value = '1'; field('time').value = ''; renderSlots(); summary(); void (async () => {await loadCalendar({chooseAvailable:true}); if (version === generation && element.isConnected) await loadSlots();})(); break;}
         case 'quantity': summary(); break;
       }
+      summary();
     });
+    element.addEventListener('input',()=>queueMicrotask(summary));
     element.addEventListener('click', event => {
-      const button = event.target.closest('[data-date],[data-slot],[data-minute],[data-week],[data-clear-range]');
+      const button = event.target.closest('[data-date],[data-slot],[data-week],[data-clear-range]');
       if (!button || button.disabled || busy || locked) return;
       error.textContent = '';
       if (button.hasAttribute('data-week')) {
@@ -330,11 +341,6 @@
       } else if (button.hasAttribute('data-date')) {
         field('date').value = button.dataset.date; renderCalendar();
         void loadSlots();
-      } else if (button.hasAttribute('data-minute')) {
-        selectedRange=ranges.rangeFor(slots,button.dataset.minute,selectedRange?.slotsCount||1)||ranges.rangeFor(slots,button.dataset.minute);
-        field('time').value=selectedRange?.start||'';field('slotsCount').value=String(selectedRange?.slotsCount||1);
-        renderSlots();updateQuantity();
-        element.querySelector('[data-minute="'+button.dataset.minute+'"]')?.focus({preventScroll:true});
       } else {
         const focused = document.activeElement === button, time = button.dataset.slot;
         selectedRange = button.hasAttribute('data-clear-range') ? null : ranges.choose(slots,selectedRange,time);

@@ -70,7 +70,7 @@ test('a provider response with a shortened multi-hour reservation remains uncert
   assert.equal(f.calls.length,1);
 });
 
-function setup(t) {
+function setup(t,notifications) {
   const directory = mkdtempSync(join(tmpdir(), 'zg-booking-'));
   const databasePath = join(directory, 'promo.sqlite');
   const secret = 'test-only-secret-'.repeat(4);
@@ -94,13 +94,23 @@ function setup(t) {
       return {uuid: randomUUID(), start_time_local: '2026-11-11 12:00:00', order: {total_formatted: '1 200,00 ₽'}, status: {name: 'Новая'}};
     }
   };
-  const bookings = createBookingService({client, promo, databasePath, secret, now});
+  const bookings = createBookingService({client, promo, notifications, databasePath, secret, now});
   const input = () => ({requestId: randomUUID(), clientToken, locationId, serviceId, date: '2026-11-11', time: '12:00',
     name: 'Тест', phone: '+79990000001', consent: true, terms: true, message: 'Только тестовые данные', quantity: 1});
   const claim = () => promo.claim({name: 'Тест', phone: '+79990000001', consent: true, terms: true, clientToken}, 'test');
   t.after(() => {bookings.close(); promo.close(); rmSync(directory, {recursive: true, force: true});});
   return {bookings, promo, client, calls, input, claim, advance: milliseconds => {time += milliseconds;}};
 }
+
+test('only a successful new booking enqueues one notification in its confirmation transaction',async t=>{
+ const queued=[];let wakes=0;
+ const f=setup(t,{enqueue:(id,payload,transaction)=>{assert.equal(transaction.prepare('SELECT state FROM site_bookings WHERE request_id=?').get(id).state,'confirmed');queued.push({id,payload});},wake:()=>wakes++});
+ const input=f.input();
+ await assert.rejects(f.bookings.book({...input,requestId:randomUUID(),time:'11:00'}),{code:'SLOT'});
+ const result=await f.bookings.book(input);await f.bookings.book(input);
+ assert.equal(queued.length,1);assert.equal(wakes,1);assert.equal(queued[0].id,input.requestId);
+ assert.equal(queued[0].payload.fields['BookNow ID'],result.id);
+});
 
 test('ordinary booking uses an actual slot in its timezone and ignores forged percentages', async t => {
   const f = setup(t);
@@ -204,7 +214,7 @@ test('calendar reflects free seats, rejects impossible dates and removes elapsed
   assert.equal(f.calls.length, 0);
 });
 
-test('minute-based starts remain available and bookable, including today', async t => {
+test('only future whole-hour starts are available and bookable', async t => {
   const f = setup(t), original = f.client.request;
   f.client.request = async (path, body) => {
     if (path.includes('/time-slots?')) return {timezone: 'Asia/Barnaul', currency: 'RUB',
@@ -214,13 +224,14 @@ test('minute-based starts remain available and bookable, including today', async
     return original(path, body);
   };
   f.advance(86400000 + 5 * 3600000 + 5 * 60000); // 12:05 on the day of the visit.
-  assert.deepEqual((await f.bookings.slots(f.input())).slots.map(slot => slot.start), ['12:15','12:30','12:45','13:00']);
+  assert.deepEqual((await f.bookings.slots(f.input())).slots.map(slot => slot.start), ['13:00']);
   assert.deepEqual((await f.bookings.calendar(f.input())).dates,
-    [{date: '2026-11-11', count: 4}, {date: '2026-11-12', count: 1}]);
+    [{date: '2026-11-11', count: 1}, {date: '2026-11-12', count: 0}]);
   await assert.rejects(f.bookings.book({...f.input(), time: '12:00'}), {code: 'SLOT'});
-  const result=await f.bookings.book({...f.input(), time: '12:15'});
-  assert.equal(result.start,'2026-11-11T05:15:00Z');
-  assert.equal(result.end,'2026-11-11T06:15:00Z');
+  await assert.rejects(f.bookings.book({...f.input(), time: '12:15'}), {code: 'SLOT'});
+  const result=await f.bookings.book({...f.input(), time: '13:00'});
+  assert.equal(result.start,'2026-11-11T06:00:00Z');
+  assert.equal(result.end,'2026-11-11T07:00:00Z');
   assert.equal(f.calls.length, 1);
 });
 

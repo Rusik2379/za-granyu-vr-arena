@@ -213,7 +213,7 @@ test('calendar reflects free seats, rejects impossible dates and removes elapsed
   assert.equal(f.calls.length, 0);
 });
 
-test('only future whole-hour starts are available and bookable', async t => {
+test('today keeps actual future fractional-hour starts and rejects elapsed times', async t => {
   const f = setup(t), original = f.client.request;
   f.client.request = async (path, body) => {
     if (path.includes('/time-slots?')) return {timezone: 'Asia/Barnaul', currency: 'RUB',
@@ -223,14 +223,13 @@ test('only future whole-hour starts are available and bookable', async t => {
     return original(path, body);
   };
   f.advance(86400000 + 5 * 3600000 + 5 * 60000); // 12:05 on the day of the visit.
-  assert.deepEqual((await f.bookings.slots(f.input())).slots.map(slot => slot.start), ['13:00']);
+  assert.deepEqual((await f.bookings.slots(f.input())).slots.map(slot => slot.start), ['12:15','12:30','12:45','13:00']);
   assert.deepEqual((await f.bookings.calendar(f.input())).dates,
-    [{date: '2026-11-11', count: 1}, {date: '2026-11-12', count: 0}]);
+    [{date: '2026-11-11', count: 4}, {date: '2026-11-12', count: 1}]);
   await assert.rejects(f.bookings.book({...f.input(), time: '12:00'}), {code: 'SLOT'});
-  await assert.rejects(f.bookings.book({...f.input(), time: '12:15'}), {code: 'SLOT'});
-  const result=await f.bookings.book({...f.input(), time: '13:00'});
-  assert.equal(result.start,'2026-11-11T06:00:00Z');
-  assert.equal(result.end,'2026-11-11T07:00:00Z');
+  const result=await f.bookings.book({...f.input(), time: '12:15'});
+  assert.equal(result.start,'2026-11-11T05:15:00Z');
+  assert.equal(result.end,'2026-11-11T06:15:00Z');
   assert.equal(f.calls.length, 1);
 });
 

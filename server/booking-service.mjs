@@ -98,7 +98,7 @@ export function createBookingService({client, promo, notifications, databasePath
       dates: (result.dates || []).filter(day => day.date >= input.date && day.date <= end &&
         Date.parse(day.date + 'T00:00:00Z') <= now() + 90 * 86400000).map(day => ({date: day.date,
         slots: (day.slots || []).filter(slot => Number(slot.quantity) > 0 &&
-          /^(?:[01]\d|2[0-3]):00$/.test(slot.start) && Date.parse(slotToUtc(day.date, slot.start, result.timezone)) > now())
+          /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(slot.start) && Date.parse(slotToUtc(day.date, slot.start, result.timezone)) > now())
           .map(slot => ({start: slot.start, end: slot.end, quantity: Number(slot.quantity),
             priceMinor: service.priceHidden ? null : slot.price,
             priceLabel: service.priceHidden ? '' : slot.price_formatted}))}))};

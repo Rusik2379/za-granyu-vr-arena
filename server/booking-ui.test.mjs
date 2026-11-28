@@ -10,7 +10,7 @@ test('submit remains clickable for native field validation after choosing a time
  fields.quantity.value='1';
  const nodes={};const submit={disabled:true};
  const context=vm.createContext({field:key=>fields[key],element:{elements:Object.values(fields),querySelector:key=>nodes[key]||= {}},submit,
-   selectedRange:{priceMinor:120000},opts:{},settings:{},busy:false,locked:false,slotsLoading:false,calendarLoading:false});
+   service:{},selectedRange:{priceMinor:120000},opts:{},settings:{},busy:false,locked:false,slotsLoading:false,calendarLoading:false});
  vm.runInContext(summary,context);
  const update=()=>vm.runInContext('summary()',context);
  update();assert.equal(submit.disabled,false);

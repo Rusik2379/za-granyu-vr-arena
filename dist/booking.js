@@ -96,7 +96,7 @@
         <div class="booking-schedule">
           <div class="booking-week-panel"><div class="booking-week-header"><div><h3>Дата</h3><p data-week-title></p></div><div class="booking-week-controls"><button type="button" class="booking-week-nav" data-week="-1" aria-label="Предыдущая неделя">${icon('left')}</button><button type="button" class="booking-week-nav" data-week="1" aria-label="Следующая неделя">${icon('arrow')}</button></div></div>
             <div class="booking-quick-days" data-quick-days role="group" aria-label="Дни недели"></div>
-            <p data-calendar-note class="booking-schedule-note" aria-live="polite">Загружаем свободные дни…</p>
+            <p data-calendar-note class="booking-schedule-note" aria-live="polite">Загружаем свободные дни…</p><button type="button" class="booking-refresh-schedule" data-refresh-schedule>Обновить расписание</button>
           </div>
           <div class="booking-time-panel"><div class="booking-time-header"><div><h3>Время начала</h3><p data-selected-date></p></div><span class="booking-hour-step">Барнаул · UTC+7</span></div>
             <div class="booking-slot-grid" data-slots role="group" aria-label="Свободное время"></div>
@@ -159,14 +159,19 @@
         const day = offsetDate(weekStart,index);
         const count = calendarDates.get(day)?.count || 0;
         const label = dateFormat(day,{weekday:'short'});
-        return `<button type="button" class="booking-quick-day${day === localDate() ? ' is-today' : ''}" data-date="${day}" aria-pressed="${day === field('date').value}" ${!service || calendarLoading || !count || day > localDate(90) ? 'disabled' : ''} aria-label="${escapeHtml(dateFormat(day,{day:'numeric',month:'long',weekday:'long'}))}${day === localDate() ? ', сегодня' : ''}: ${count ? 'есть свободное время' : 'нет сеансов'}"><span>${label}</span><strong>${escapeHtml(dateFormat(day,{day:'numeric'}))}</strong></button>`;
+        return `<button type="button" class="booking-quick-day${day === localDate() ? ' is-today' : ''}${!count ? ' is-unavailable' : ''}" data-date="${day}" aria-pressed="${day === field('date').value}" ${!service || calendarLoading || day < localDate() || day > localDate(90) ? 'disabled' : ''} aria-label="${escapeHtml(dateFormat(day,{day:'numeric',month:'long',weekday:'long'}))}${day === localDate() ? ', сегодня' : ''}: ${count ? 'есть свободное время' : 'проверить доступное время'}"><span>${label}</span><strong>${escapeHtml(dateFormat(day,{day:'numeric'}))}</strong></button>`;
       }).join('');
     }
 
     function renderSlots() {
       element.querySelector('[data-selected-date]').textContent = dateFormat(field('date').value, {weekday:'long',day:'numeric',month:'long'});
       slotsElement.setAttribute('aria-busy', String(slotsLoading));
-      slotsElement.innerHTML = slots.map(slot => {
+      const byHour = new Map();
+      for (const slot of [...slots].sort((a,b)=>a.start.localeCompare(b.start))) {
+        const key = slot.start.slice(0,2);
+        if (!byHour.has(key) || slot.start.endsWith(':00')) byHour.set(key,slot);
+      }
+      slotsElement.innerHTML = [...byHour.values()].map(slot => {
         const selected = selectedRange?.start === slot.start;
         const classes = ['booking-slot', selected ? 'is-selected' : ''].join(' ');
         return `<button type="button" class="${classes}" data-slot="${slot.start}" aria-pressed="${selected}" ${slotsLoading ? 'disabled' : ''} aria-label="${slot.start}–${slot.end}${selected ? ', выбрано' : ', свободно'}"><strong>${slot.start}</strong><small>до ${slot.end}</small>${selected ? icon('check') : ''}</button>`;
@@ -192,7 +197,7 @@
           stafferId: field('stafferId').value, date: start, days: String(days)}));
         if (version !== calendarGeneration || !element.isConnected) return;
         calendarDates = new Map(result.dates.map(day => [day.date, day]));
-        if (chooseAvailable && !calendarDates.get(field('date').value)?.count) {
+        if (chooseAvailable && (!field('date').value || field('date').value < localDate() || field('date').value < weekStart || field('date').value > offsetDate(weekStart,6))) {
           const next = result.dates.find(day => day.count && day.date <= localDate(90));
           if (next) field('date').value = next.date;
         }
@@ -205,6 +210,7 @@
     }
 
     function summary() {
+      element.querySelector('[data-refresh-schedule]').disabled = !service || busy || locked || calendarLoading || slotsLoading;
       const slot = selectedRange;
       const total = element.querySelector('[data-total]'), before = element.querySelector('[data-before]'), savings = element.querySelector('[data-savings]');
       before.hidden = true; savings.hidden = true;
@@ -240,7 +246,7 @@
       try {
         const result = await api('slots?' + new URLSearchParams({locationId:location.id,serviceId:service.id,stafferId:field('stafferId').value,date:field('date').value}));
         if (version !== slotGeneration || !element.isConnected) return;
-        slots = result.slots.filter(slot => /^(?:[01]\d|2[0-3]):00$/.test(slot.start));
+        slots = result.slots.filter(slot => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(slot.start));
         calendarDates.set(field('date').value, {date:field('date').value,count:slots.length});
         renderCalendar();
         note.textContent = slots.length ? 'Выбери одно время начала. Длительность сеанса — ' + durationLabel(service.duration || ranges.rangeFor(slots,slots[0].start)?.durationMinutes) + '. Другое время заменит выбранное.' : 'На эту дату нет свободных сеансов. Выбери другую дату';
@@ -313,10 +319,13 @@
     });
     element.addEventListener('input',()=>queueMicrotask(summary));
     element.addEventListener('click', event => {
-      const button = event.target.closest('[data-date],[data-slot],[data-week],[data-clear-range]');
+      const button = event.target.closest('[data-date],[data-slot],[data-week],[data-clear-range],[data-refresh-schedule]');
       if (!button || button.disabled || busy || locked) return;
       error.textContent = '';
-      if (button.hasAttribute('data-week')) {
+      if (button.hasAttribute('data-refresh-schedule')) {
+        const version=++generation;
+        void (async()=>{await loadCalendar();if(version===generation&&element.isConnected)await loadSlots();})();
+      } else if (button.hasAttribute('data-week')) {
         const version = ++generation;
         ++slotGeneration;
         weekStart = offsetDate(weekStart, Number(button.dataset.week) * 7);

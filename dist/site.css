@@ -480,6 +480,10 @@ body.booking-in-view .promo-tab,body:has(.booking-modal) .promo-tab{visibility:h
 .booknow-form [data-calendar-note],.booknow-form [data-time-note]{min-height:1.7em}
 .field .phone-hint{display:block;margin-top:8px;font-size:14px;line-height:1.5;color:#9fb2cc}
 .field .phone-hint.is-error{color:#ff9ea8}
+.booknow-form .booking-quick-day.is-unavailable:not([aria-pressed=true]){background:#0d121c;color:#8e9db4}
+.booking-refresh-schedule{border:0;border-bottom:1px solid #385574;background:transparent;color:#a9d8ff;padding:7px 0;font:inherit;font-size:13px;cursor:pointer}
+.booking-refresh-schedule:hover{color:#fff;border-color:#ff3048}
+.booking-refresh-schedule:disabled{opacity:.45;cursor:wait}
 .field input[aria-invalid=true]{border-color:#ff6172}
 @media(prefers-reduced-motion:reduce){.booknow-form .booking-schedule,.booknow-form .booking-slot-grid,.booknow-form .booking-quick-day,.booknow-form .booking-week-nav{transition:none}}
 .promo-modal{max-width:1070px;background:#0b0e16;border-color:#34405a;border-radius:12px;box-shadow:0 28px 140px #000c,0 0 65px #1279ff18}
